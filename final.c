@@ -30,7 +30,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-unsigned int texture[7]; // Texture names
+GLuint texture[7]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -67,103 +67,166 @@ static void ball(double x,double y,double z,double r)
    glPopMatrix();
 }
 
-void cylinder(double x_r, double y_r, double z_r, 
-   double dx, double dy, double dz,
-   double R, double G, double B, 
-   double radius, double height, double rotate)
+static void cylinder(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d)
 {
+   int i,k;
    glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D, texture[6]);
+   //  Save transformation
    glPushMatrix();
-   glTranslated(x_r,y_r,z_r);
-   glScaled(dx,dy,dz);
-   glRotatef(rotate, 1, 0, 0);
-
-    double x              = 0.0;
-    double y              = 0.0;
-    double angle          = 0.0;
-    double angle_stepsize = 0.1;
-    double PI = 3.14;
-
-    /** Draw the tube */
-    glColor3ub(R-40,G-40,B-40);
-    glBindTexture(GL_TEXTURE_2D,texture[3]);
-    glBegin(GL_QUAD_STRIP);
-    glTexCoord2f(0.5, 0.5);
-    angle = 0.0;
-        while( angle < 2*3.14 ) {
-            const float u = (angle / (float) 2 * 3.14);
-            glTexCoord2f(u, 0.0);
-            x = radius * cos(angle);
-            y = radius * sin(angle);
-            glNormal3f(x, y, 0);
-            glVertex3f(x, y , height);
-            glTexCoord2f(u, height);
-            glVertex3f(x, y , 0.0);
-            angle = angle + angle_stepsize;
-        }
-        glTexCoord2f( 0.0, 0.0 );
-        glVertex3f(radius, 0.0, height);
-        glTexCoord2f( 0.0, 1.0 );
-        glVertex3f(radius, 0.0, 0.0);
-    glEnd();
-
-    glColor3ub(R-40,G-40,B-40);
-    glBegin(GL_POLYGON);
-    angle = 2 * PI;
-        while( angle >= 0 ) {
-            x = radius * cos(angle);
-            y = radius * sin(angle);
-            glTexCoord2f(0.5 * cos(angle) + 0.5, 0.5 * sin(angle) + 0.5);
-            glNormal3f(0, 0, -1);
-            glVertex3f(x, y , 0);
-            angle = angle - angle_stepsize;
-        }
-        glVertex3f(radius, 0.0, 0);
-    glEnd();
-
-    //top circle
-    glColor3ub(R - 20,G - 20,B - 20);
-    glBegin(GL_POLYGON);
-    angle = 0.0;
-        while( angle < 2*PI ) {
-            x = radius * cos(angle);
-            y = radius * sin(angle);
-            glTexCoord2f(0.5 * cos(angle) + 0.5, 0.5 * sin(angle) + 0.5);
-            glNormal3f(0, 0, 1);
-            glVertex3f(x, y , height);
-            angle = angle + angle_stepsize;
-        }
-        glVertex3f(radius, 0.0, height);
-    glEnd();
-
-    glPopMatrix();
-    glDisable(GL_TEXTURE_2D);
+   //  Offset and scale
+   glTranslated(x,y,z);
+   glRotatef(rotation, x_r, y_r, z_r);
+   glScaled(r,r,d);
+   //  Head & Tail
+   glColor3f(1,1,1);
+   for (i=1;i>=-1;i-=2)
+   {
+      glNormal3f(0,0,i);
+      glBegin(GL_TRIANGLE_FAN);
+      glTexCoord2f(0.5,0.5);
+      glVertex3f(0,0,i);
+      for (k=0;k<=360;k+=10)
+      {
+         glTexCoord2f(0.5*Cos(k)+0.5,0.5*Sin(k)+0.5);
+         glVertex3f(i*Cos(k),Sin(k),i);
+      }
+      glEnd();
+   }
+   //  Edge
+   glColor3f(1.00,0.77,0.36);
+   glBegin(GL_QUAD_STRIP);
+   for (k=0;k<=360;k+=10)
+   {
+      glNormal3f(Cos(k),Sin(k),0);
+      glTexCoord2f(0,0.5*k); glVertex3f(Cos(k),Sin(k),+1);
+      glTexCoord2f(1,0.5*k); glVertex3f(Cos(k),Sin(k),-1);
+   }
+   glEnd();
+   //  Undo transformations
+   glPopMatrix();
+   glDisable(GL_TEXTURE_2D);
 }
 
+static void rectangularprism(int m, int n, int thick) {
 
-static void plane(float width, float height, float pos) {
+  float x = m * 2.5;
+  float y = n * 2.5;
+  float z = thick?3:1;
+  glPushMatrix();
+  //Transformationstuffhere
+
+  //  Top and sides
+   glBegin(GL_QUADS);
+   // front
+   glNormal3f( 0, 1, 0);
+   glVertex3f(-x,+y,+z);
+   glVertex3f(+x,+y,+z);
+   glVertex3f(+x,+y,-z);
+   glVertex3f(-x,+y,-z);
+   // back
+   glNormal3f( 0,-1, 0);
+   glVertex3f(+x,-y,+z);
+   glVertex3f(-x,-y,+z);
+   glVertex3f(-x,-y,-z);
+   glVertex3f(+x,-y,-z);
+   // right
+   glNormal3f( 1, 0, 0);
+   glVertex3f(+x,+y,+z);
+   glVertex3f(+x,-y,+z);
+   glVertex3f(+x,-y,-z);
+   glVertex3f(+x,+y,-z);
+   // left
+   glNormal3f(-1, 0, 0);
+   glVertex3f(-x,+y,-z);
+   glVertex3f(-x,-y,-z);
+   glVertex3f(-x,-y,+z);
+   glVertex3f(-x,+y,+z);
+   // top
+   glNormal3f( 0, 0, 1);
+   glVertex3f(-x,+y,+z);
+   glVertex3f(-x,-y,+z);
+   glVertex3f(+x,-y,+z);
+   glVertex3f(+x,+y,+z);
+   // bottom
+   glNormal3f( 0, 0, -1);
+   glVertex3f(+x,-y,+z);
+   glVertex3f(+x,+y,+z);
+   glVertex3f(-x,+y,+z);
+   glVertex3f(-x,-y,+z);
+
+   glEnd();
+   glPopMatrix();
+}
+
+static void drawTorus(double r, double c,
+               int rSeg, int cSeg, double x_t, double y_t, double z_t,
+               double x_r, double y_r, double z_r, double rotate)
+{
+  glPushMatrix();
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, texture[5]);
+  glTranslated(x_t,y_t,z_t);
+  glRotatef(rotate, x_r, y_r, z_r);
+  glFrontFace(GL_CW);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  const double PI = 3.1415926535897932384626433832795;
+  const double TAU = 2 * PI;
+
+  for (int i = 0; i < rSeg; i++) {
+    glBegin(GL_QUAD_STRIP);
+    for (int j = 0; j <= cSeg; j++) {
+      for (int k = 0; k <= 1; k++) {
+        double s = (i + k) % rSeg + 0.5;
+        double t = j % (cSeg + 1);
+
+        double x = (c + r * cos(s * TAU / rSeg)) * cos(t * TAU / cSeg);
+        double y = (c + r * cos(s * TAU / rSeg)) * sin(t * TAU / cSeg);
+        double z = r * sin(s * TAU / rSeg);
+
+        double u = (i + k) / (float) rSeg;
+        double v = t / (float) cSeg;
+
+        glTexCoord2d(u, v);
+        glNormal3f(2 * x, 2 * y, 2 * z);
+        glVertex3d(2 * x, 2 * y, 2 * z);
+      }
+    }
+    glEnd();
+  }
+
+  glFrontFace(GL_CCW);
+  glPopMatrix();
+}
+
+static void plane(float width, float height, float pos, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t) {
+   glPushMatrix();
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, texture[1]);
+   glBindTexture(GL_TEXTURE_2D, texture[4]);
    glColor3f(1,1 ,1);
+   glRotatef(rotate, x_r, y_r, z_r);
+   glTranslated(x_t, y_t, z_t);
    glBegin(GL_QUADS);
 
    glNormal3f(0, 1, 0);
 
    glTexCoord2f(0.0f, 0.0f);
-   glVertex3f(-1.0 * width, pos, height);
+   glVertex3f(-1.0 * width, 0, height);
 
    glTexCoord2f(1.0f, 0.0f);
-   glVertex3f( width, pos, height);
+   glVertex3f( width, 0, height);
 
    glTexCoord2f(1.0f, 1.0f);  
-   glVertex3f( width, pos, -1.0 * height);
+   glVertex3f( width, 0, -1.0 * height);
 
    glTexCoord2f(0.0f, 1.0f);
-   glVertex3f(-1.0 * width, pos, -1.0 * height);
+   glVertex3f(-1.0 * width, 0, -1.0 * height);
 
 
 glEnd();
 glDisable(GL_TEXTURE_2D);
+glPopMatrix();
 }
 
 static void icosahedron(double scale, double origin) {
@@ -228,6 +291,18 @@ glEnd();
 
    glDisable(GL_TEXTURE_2D);
 }
+
+void drawWallChains() {
+   drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 3.0, 3, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 2.0, 2, 0, 1, 0, 90);
+
+   drawTorus(.10, .30, 20, 8, -12, 5, -3, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 4.0, -2, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
+   drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
+}
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
  */
@@ -281,11 +356,27 @@ void display()
       glDisable(GL_LIGHTING);
    //  Draw scene
    // icosahedron(.5, 0);
-   plane(4, 4, -1);
+   //Floor
+   plane(12, 12, -6, 0, 0, 0, 0, 0, -6, 0);
+   //Right Wall
+   plane(12, 6, -6, 90, 1, 0, 0, 0, -12, 0);
+   //Left Wall
+   plane(12, 6, -6, -90, 1, 0, 0, 0, -12, 0);
+   //Forward Wall
+   plane(6, 12, -6, 90, 0, 0, 1, 0, -12, 0);
+   //Backwards Wall
+   plane(6, 12, -6, -90, 0, 0, 1, 0, -12, 0);
+   //Ceiling
+   plane(12, 12, -6, 180, 0, 0, 1, 0, -6, 0);
+
+   // plane(4, 2, -6, 90);
    icosahedron(.5, -1);
-   cylinder(2, 0, -1, .1, .1, .1, 0, 0, 1, 6, 10, 90);
-   cylinder(3, 0, -2, .1, .1, .1, 0, 0, 1, 6, 10, 90);
-   cylinder(.5, 0, -1, .1, .1, .1, 0, 0, 1, 6, 10, 90);
+// double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
+   cylinder(0, -2, 0, 1, 0, 0, 90, 5, 0.2);
+
+   drawWallChains();
+
+   // rectangularprism(1, 2, 2);
    // coin(0, 0, 0, 1, 1);
    //  Draw axes - no lighting from here on
    glDisable(GL_LIGHTING);
@@ -402,9 +493,9 @@ void key(unsigned char ch,int x,int y)
     double dy = sin(f_ph);
     double dz = sin(f_th)*cos(f_ph);
 
-    f_x += 0.1 * dx;
-    f_y += 0.1 * dy;
-    f_z += 0.1 * dz;
+    f_x += 0.3 * dx;
+    f_y += 0.3 * dy;
+    f_z += 0.3 * dz;
   }
   // Calculate change in x, y, and z then add to respective positions
   // Moves backwards in first person
@@ -413,28 +504,28 @@ void key(unsigned char ch,int x,int y)
     double dy = sin(f_ph);
     double dz = sin(f_th)*cos(f_ph);
 
-    f_x -= 0.1 * dx;
-    f_y -= 0.1 * dy;
-    f_z -= 0.1 * dz;
+    f_x -= 0.3 * dx;
+    f_y -= 0.3 * dy;
+    f_z -= 0.3 * dz;
   }
 
   //Rotate First person view to the Left
   else if (ch == 'a') {
-    f_th -= 0.1;
+    f_th -= 0.3;
   }
   //Rotate First Person view to the right
   else if (ch == 'd') {
-    f_th += 0.1;
+    f_th += 0.3;
   }
 
   //Rotate first person view upwards
   else if (ch == 'q') {
-    f_ph += 0.1;
+    f_ph += 0.3;
   }
 
   //Rotate first person view downwards
   else if (ch == 'e') {
-    f_ph -= 0.1;
+    f_ph -= 0.3;
   }
    //  Translate shininess power to value (-1 => 0)
    shiny = shininess<0 ? 0 : pow(2.0,shininess);
@@ -479,6 +570,9 @@ int main(int argc,char* argv[])
    texture[1] = LoadTexBMP("grass.bmp");
    texture[2] = LoadTexBMP("rivet_steel_1.bmp");
    texture[3] = LoadTexBMP("metal.bmp");
+   texture[4] = LoadTexBMP("wall.bmp");
+   texture[5] = LoadTexBMP("chain.bmp");
+   texture[6] = LoadTexBMP("wood.bmp");
    ErrCheck("init");
    glutMainLoop();
    return 0;
