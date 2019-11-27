@@ -12,6 +12,7 @@
  *  ESC        Exit
  */
 #include "CSCIx229.h"
+
 int mode=0;       //  Texture mode
 int ntex=0;       //  Cube faces
 int axes=1;       //  Display axes
@@ -46,6 +47,7 @@ double cam_z = 0;
 double f_th = 0;
 double f_ph = 0;
 
+GLUquadric* qobj;
 
 
 /*
@@ -67,11 +69,12 @@ static void ball(double x,double y,double z,double r)
    glPopMatrix();
 }
 
-static void cylinder(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d)
+static void flatTop(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, 
+  double r,double d, int tex)
 {
    int i,k;
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, texture[6]);
+   glBindTexture(GL_TEXTURE_2D, texture[tex]);
    //  Save transformation
    glPushMatrix();
    //  Offset and scale
@@ -216,6 +219,73 @@ static void drawTorus(double r, double c,
   glPopMatrix();
 }
 
+static void cylinder(double x, double y, double z, double x_s, double y_s, 
+  double z_s, double x_r, double y_r, double z_r, double rotation)
+{
+    const double PI = 3.14159;
+
+    /* top triangle */
+    double i, resolution  = 0.1;
+    double height = 1;
+    double radius = 0.5;
+
+    glPushMatrix();
+    glTranslated(x, y, z);
+    glRotatef(x_r, y_r, z_r, rotation);
+    glScaled(x_s, y_s, z_s);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture[8]);
+
+    glBegin(GL_TRIANGLE_FAN);
+        glTexCoord2f( 0.5, 0.5 );
+        glVertex3f(0, height, 0);  /* center */
+        for (i = 2 * PI; i >= 0; i -= resolution)
+
+        {
+            glNormal3f(0,0,1);
+            glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
+            glVertex3f(radius * cos(i), height, radius * sin(i));
+        }
+        /* close the loop back to 0 degrees */
+        glTexCoord2f( 0.5, 0.5 );
+        glVertex3f(radius, height, 0);
+    glEnd();
+
+    /* bottom triangle: note: for is in reverse order */
+    glBegin(GL_TRIANGLE_FAN);
+        glTexCoord2f( 0.5, 0.5 );
+        glVertex3f(0, 0, 0);  /* center */
+        for (i = 0; i <= 2 * PI; i += resolution)
+        {
+            glNormal3f(0,0,-1);
+            glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
+            glVertex3f(radius * cos(i), 0, radius * sin(i));
+        }
+    glEnd();
+
+    /* middle tube */
+    glBegin(GL_QUAD_STRIP);
+        for (i = 0; i <= 2 * PI; i += resolution)
+        {
+            glNormal3f(Cos(i * 57.29),0,Sin(i * 57.29));
+            const float tc = ( i / (float)( 2 * PI ) );
+            glTexCoord2f( tc, 0.0 );
+            glVertex3f(radius * cos(i), 0, radius * sin(i));
+            glTexCoord2f( tc, 1.0 );
+            glVertex3f(radius * cos(i), height, radius * sin(i));
+        }
+        /* close the loop back to zero degrees */
+        glTexCoord2f( 0.0, 0.0 );
+        glVertex3f(radius, 0, 0);
+        glTexCoord2f( 0.0, 1.0 );
+        glVertex3f(radius, height, 0);
+    glEnd();
+
+    glPopMatrix();
+}
+
+
 static void plane(float width, float height, float pos, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t) {
    glPushMatrix();
    glEnable(GL_TEXTURE_2D);
@@ -312,6 +382,50 @@ glEnd();
    glPopMatrix();
 }
 
+static void cone(double x, double y, double z, double x_s, double y_s, double z_s, 
+  double x_t, double y_t, double z_t, double rotation, int tex) {
+  glPushMatrix();
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, texture[tex]);
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rotation, x_t, y_t, z_t);
+  gluQuadricTexture(qobj, texture[tex]);
+  gluCylinder(qobj, 1, 0, 1, 50, 50);
+  glDisable(GL_TEXTURE_2D);
+  glPopMatrix();
+}
+
+static void candle(double x, double y, double z, double x_s, double y_s, double z_s,
+  double x_t, double y_t, double z_t, double rotation) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rotation, x_t, y_t, z_t);
+  cone(0, 0, 0, .5, .5, .5, -1, 0, 0, 90, 8);
+  cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0);
+  glPopMatrix();
+
+  float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
+  float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
+  float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
+  //  Light direction
+  float Position[]  = {x, y + 1, z, 1};
+  //  Draw light position as ball (still no lighting here)
+  glColor3f(1,1,1);
+  ball(Position[0],Position[1],Position[2] , 0.1);
+  //  glColor sets ambient and diffuse color materials
+  //  Enable light 0
+  glEnable(GL_LIGHT0);
+  //  Set ambient, diffuse, specular components and position of light 0
+  glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
+  glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
+  glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
+  glLightfv(GL_LIGHT0,GL_POSITION,Position);
+  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
+
+}
+
 void drawWallChains() {
    drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
    drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
@@ -355,22 +469,21 @@ void display()
       //  Draw light position as ball (still no lighting here)
       glColor3f(1,1,1);
       ball(Position[0],Position[1],Position[2] , 0.1);
-      //  OpenGL should normalize normal vectors
+       // OpenGL should normalize normal vectors
       glEnable(GL_NORMALIZE);
       //  Enable lighting
       glEnable(GL_LIGHTING);
-      //  glColor sets ambient and diffuse color materials
+      // //  glColor sets ambient and diffuse color materials
       glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
       glEnable(GL_COLOR_MATERIAL);
-      //  Enable light 0
-      glEnable(GL_LIGHT0);
-      //  Set ambient, diffuse, specular components and position of light 0
-      glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-      glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-      glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-      glLightfv(GL_LIGHT0,GL_POSITION,Position);
+      // //  Enable light 0
+      // glEnable(GL_LIGHT0);
+      // //  Set ambient, diffuse, specular components and position of light 0
+      // glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
+      // glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
+      // glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
+      // glLightfv(GL_LIGHT0,GL_POSITION,Position);
       glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
-      // glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,{1,1,1,1});
    }
    else
       glDisable(GL_LIGHTING);
@@ -392,13 +505,15 @@ void display()
    // plane(4, 2, -6, 90);
    icosahedron(0, -3.5, 0, .05, .05, .05);
 // double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
-   cylinder(0, -4, 0, 1, 0, 0, 90, 5, 0.2);
+   flatTop(0, -4, 0, 1, 0, 0, 90, 5, 0.2, 6);
 
    drawWallChains();
    cube(2.5, -5, 2.5, .3, 1, .3, 0);
    cube(-2.5, -5, 2.5, .3, 1, .3, 0);
    cube(-2.5, -5, -2.5, .3, 1, .3, 0);
    cube(2.5, -5, -2.5, .3, 1, .3, 0);
+
+   candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
    // coin(0, 0, 0, 1, 1);
    //  Draw axes - no lighting from here on
    glDisable(GL_LIGHTING);
@@ -575,12 +690,14 @@ void reshape(int width,int height)
  */
 int main(int argc,char* argv[])
 {
+  qobj = gluNewQuadric();
+  gluQuadricNormals(qobj, GLU_SMOOTH);
    //  Initialize GLUT
    glutInit(&argc,argv);
    //  Request double buffered, true color window with Z buffering at 600x600
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
    glutInitWindowSize(600,600);
-   glutCreateWindow("Alexander Louie Homework 6");
+   glutCreateWindow("Alexander Louie Final");
    //  Set callbacks
    glutDisplayFunc(display);
    glutReshapeFunc(reshape);
@@ -596,7 +713,13 @@ int main(int argc,char* argv[])
    texture[5] = LoadTexBMP("chain.bmp");
    texture[6] = LoadTexBMP("wood.bmp");
    texture[7] = LoadTexBMP("dice.bmp");
+   texture[8] = LoadTexBMP("candle.bmp");
    ErrCheck("init");
    glutMainLoop();
    return 0;
+}
+
+void cleanup() // call once when you exit program
+{
+  gluDeleteQuadric(qobj);
 }
