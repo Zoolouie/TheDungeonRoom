@@ -30,7 +30,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-GLuint texture[7]; // Texture names
+GLuint texture[10]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -108,55 +108,71 @@ static void cylinder(double x,double y,double z, double x_r, double y_r, double 
    glDisable(GL_TEXTURE_2D);
 }
 
-static void rectangularprism(int m, int n, int thick) {
-
-  float x = m * 2.5;
-  float y = n * 2.5;
-  float z = thick?3:1;
+static void cube(double x,double y,double z,
+                 double dx,double dy,double dz,
+                 double th)
+{
   glPushMatrix();
-  //Transformationstuffhere
+   //  Save transformation
 
-  //  Top and sides
+   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D, texture[6]);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+
+   //  Offset
+   glTranslated(x,y,z);
+   glRotated(th,0,1,0);
+   glScaled(dx,dy,dz);
+    glColor3f(1,1,1);
+   //  Cube
    glBegin(GL_QUADS);
-   // front
+   //  Front
    glNormal3f( 0, 1, 0);
-   glVertex3f(-x,+y,+z);
-   glVertex3f(+x,+y,+z);
-   glVertex3f(+x,+y,-z);
-   glVertex3f(-x,+y,-z);
-   // back
-   glNormal3f( 0,-1, 0);
-   glVertex3f(+x,-y,+z);
-   glVertex3f(-x,-y,+z);
-   glVertex3f(-x,-y,-z);
-   glVertex3f(+x,-y,-z);
-   // right
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,-1, 1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,-1, 1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,+1, 1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,+1, 1);
+   //  Back
+   glTexCoord2d(1, 1);
+   glNormal3f( 0, -1, 0);
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(+1,-1,-1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(-1,-1,-1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(-1,+1,-1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(+1,+1,-1);
+   //  Right
+   glTexCoord2d(1, 1);
    glNormal3f( 1, 0, 0);
-   glVertex3f(+x,+y,+z);
-   glVertex3f(+x,-y,+z);
-   glVertex3f(+x,-y,-z);
-   glVertex3f(+x,+y,-z);
-   // left
-   glNormal3f(-1, 0, 0);
-   glVertex3f(-x,+y,-z);
-   glVertex3f(-x,-y,-z);
-   glVertex3f(-x,-y,+z);
-   glVertex3f(-x,+y,+z);
-   // top
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(+1,-1,+1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,-1,-1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,+1,-1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(+1,+1,+1);
+   //  Left
+   glTexCoord2d(1, 1);
+   glNormal3f( -1, 0, 0);
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,-1,-1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(-1,-1,+1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(-1,+1,+1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,+1,-1);
+   //  Top
+   glTexCoord2d(1, 1);
    glNormal3f( 0, 0, 1);
-   glVertex3f(-x,+y,+z);
-   glVertex3f(-x,-y,+z);
-   glVertex3f(+x,-y,+z);
-   glVertex3f(+x,+y,+z);
-   // bottom
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,+1,+1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,+1,+1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,+1,-1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,+1,-1);
+   //  Bottom
+   glTexCoord2d(1, 1);
    glNormal3f( 0, 0, -1);
-   glVertex3f(+x,-y,+z);
-   glVertex3f(+x,+y,+z);
-   glVertex3f(-x,+y,+z);
-   glVertex3f(-x,-y,+z);
-
+   glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,-1,-1);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,-1,-1);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,-1,+1);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,-1,+1);
+   //  End
    glEnd();
+   //  Undo transofrmations
    glPopMatrix();
+   glDisable(GL_TEXTURE_2D);
 }
 
 static void drawTorus(double r, double c,
@@ -229,11 +245,14 @@ glDisable(GL_TEXTURE_2D);
 glPopMatrix();
 }
 
-static void icosahedron(double scale, double origin) {
+static void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
+   glPushMatrix();
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D,texture[2]);
-   double X = scale;
-   double Z = 1.618 * scale; // Golden ratio for platonic solid
+   glBindTexture(GL_TEXTURE_2D,texture[7]);
+   glTranslated(x,y,z);
+   glScaled(x_s, y_s, z_s);
+   double X = 1;
+   double Z = 1.618; // Golden ratio for platonic solid
 
    //
    GLfloat vdata[12][3] = {    
@@ -244,7 +263,7 @@ static void icosahedron(double scale, double origin) {
 
    for(int i = 0; i < 12; i ++) {
       for (int j = 0; j < 3; j ++) {
-         vdata[i][j] = vdata[i][j] + origin;
+         vdata[i][j] = vdata[i][j];
       }
    }
 
@@ -290,6 +309,7 @@ for (i = 0; i < 20; i++) {
 glEnd();
 
    glDisable(GL_TEXTURE_2D);
+   glPopMatrix();
 }
 
 void drawWallChains() {
@@ -370,13 +390,15 @@ void display()
    plane(12, 12, -6, 180, 0, 0, 1, 0, -6, 0);
 
    // plane(4, 2, -6, 90);
-   icosahedron(.5, -1);
+   icosahedron(0, -3.5, 0, .05, .05, .05);
 // double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
-   cylinder(0, -2, 0, 1, 0, 0, 90, 5, 0.2);
+   cylinder(0, -4, 0, 1, 0, 0, 90, 5, 0.2);
 
    drawWallChains();
-
-   // rectangularprism(1, 2, 2);
+   cube(2.5, -5, 2.5, .3, 1, .3, 0);
+   cube(-2.5, -5, 2.5, .3, 1, .3, 0);
+   cube(-2.5, -5, -2.5, .3, 1, .3, 0);
+   cube(2.5, -5, -2.5, .3, 1, .3, 0);
    // coin(0, 0, 0, 1, 1);
    //  Draw axes - no lighting from here on
    glDisable(GL_LIGHTING);
@@ -573,6 +595,7 @@ int main(int argc,char* argv[])
    texture[4] = LoadTexBMP("wall.bmp");
    texture[5] = LoadTexBMP("chain.bmp");
    texture[6] = LoadTexBMP("wood.bmp");
+   texture[7] = LoadTexBMP("dice.bmp");
    ErrCheck("init");
    glutMainLoop();
    return 0;
