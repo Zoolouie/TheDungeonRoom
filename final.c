@@ -31,7 +31,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-GLuint texture[10]; // Texture names
+GLuint texture[12]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -50,6 +50,26 @@ double f_ph = 0;
 GLUquadric* qobj;
 
 
+
+float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
+    GLfloat A[3] = {v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]};
+    GLfloat B[3] = {v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]};
+    N[0] = (A[1] * B[2] - A[2] * B[1]) * -1;
+    N[1] = (A[2] * B[0] - A[0] * B[2]) * -1;
+    N[2] = (A[0] * B[1] - A[1] * B[0]) * - 1;
+     
+
+  
+
+    float length = sqrt(N[0] * N[0] + N[1] * N[1] + N[2] * N[2]);
+
+    for(int i = 0; i < 3; i ++ ){
+      N[i] = N[i] / length;
+    }
+
+    return N;
+
+}
 /*
  *  Draw a ball
  *     at (x,y,z)
@@ -220,7 +240,7 @@ static void drawTorus(double r, double c,
 }
 
 static void cylinder(double x, double y, double z, double x_s, double y_s, 
-  double z_s, double x_r, double y_r, double z_r, double rotation)
+  double z_s, double x_r, double y_r, double z_r, double rotation, int tex)
 {
     const double PI = 3.14159;
 
@@ -235,7 +255,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
     glScaled(x_s, y_s, z_s);
 
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture[8]);
+    glBindTexture(GL_TEXTURE_2D, texture[tex]);
 
     glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f( 0.5, 0.5 );
@@ -286,10 +306,10 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 }
 
 
-static void plane(float width, float height, float pos, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t) {
+static void plane(float width, float height, float pos, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex) {
    glPushMatrix();
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, texture[4]);
+   glBindTexture(GL_TEXTURE_2D, texture[tex]);
    glColor3f(1,1 ,1);
    glRotatef(rotate, x_r, y_r, z_r);
    glTranslated(x_t, y_t, z_t);
@@ -356,14 +376,8 @@ for (i = 0; i < 20; i++) {
         v2[j] = vdata[tindices[i][1]][j];
         v3[j] = vdata[tindices[i][2]][j];
       }
-
-      GLfloat A[3] = {v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]};
-      GLfloat B[3] = {v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]};
-      GLfloat N[3] = {
-        (A[1] * B[2] - A[2] * B[1]) * -1,
-        (A[2] * B[0] - A[0] * B[2]) * -1,
-        (A[0] * B[1] - A[1] * B[0]) * - 1
-      };
+      GLfloat N[3];
+      calculateNormal(v1, v2, v3, N);
 
    /* color information here */ 
       glNormal3fv(&N[0]);
@@ -390,8 +404,21 @@ static void cone(double x, double y, double z, double x_s, double y_s, double z_
   glTranslated(x, y, z);
   glScaled(x_s, y_s, z_s);
   glRotatef(rotation, x_t, y_t, z_t);
-  gluQuadricTexture(qobj, texture[tex]);
-  gluCylinder(qobj, 1, 0, 1, 50, 50);
+  double twopi = 2 * 3.14;
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3f(0, 0, 0);
+  GLfloat v1[3] = {0, 0, 0};
+  for (double i = 0; i <= twopi; i += twopi / 50) {
+    GLfloat N[3];
+    GLfloat v2[3] = {2*sin(i), -2, 2*cos(i)};
+    GLfloat v3[3] = {2*sin(i - (twopi / 50)), -2, 2*cos(i-(twopi/50))};
+    calculateNormal(v1, v2, v3, N);
+    glNormal3fv(&N[0]);
+
+    glVertex3f(2 * sin(i), -2, 2 * cos(i));
+
+  }
+  glEnd();
   glDisable(GL_TEXTURE_2D);
   glPopMatrix();
 }
@@ -403,7 +430,7 @@ static void candle(double x, double y, double z, double x_s, double y_s, double 
   glScaled(x_s, y_s, z_s);
   glRotatef(rotation, x_t, y_t, z_t);
   cone(0, 0, 0, .5, .5, .5, -1, 0, 0, 90, 8);
-  cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0);
+  cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0, 8);
   glPopMatrix();
 
   float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
@@ -437,6 +464,181 @@ void drawWallChains() {
    drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
    drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
 }
+
+void drawBorders() {
+   //Floor
+   plane(12, 12, -6, 0, 0, 0, 0, 0, -6, 0, 9);
+   //Right Wall
+   plane(12, 6, -6, 90, 1, 0, 0, 0, -12, 0, 4);
+   //Left Wall
+   plane(12, 6, -6, -90, 1, 0, 0, 0, -12, 0, 4);
+   //Forward Wall
+   plane(6, 12, -6, 90, 0, 0, 1, 0, -12, 0, 4);
+   //Backwards Wall
+   plane(6, 12, -6, -90, 0, 0, 1, 0, -12, 0, 4);
+   //Ceiling
+   plane(12, 12, -6, 180, 0, 0, 1, 0, -6, 0, 4);
+}
+
+void drawShelf(double x, double y, double z) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  //SideShelves
+   cube(2.5, -1, 11, .3, 5, 1, 0);
+   cube(-2.5, -1, 11, .3, 5, 1, 0);
+   //BackBoard
+   cube(0, -1, 12, 2.8, 5, .1, 0);
+
+   //Shelves
+   cube(0, -1, 11, 2.2, .1, 1, 0);
+   cube(0, -6, 11, 2.2, .1, 1, 0);
+   cube(0, 3.9, 11, 2.2, .1, 1, 0);
+
+   glPopMatrix();
+
+}
+
+void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glBegin(GL_POLYGON);
+    // glNormal3f(0, 0, 1);
+    glVertex3f(-2.0, 0.0, 0);
+    glVertex3f(-0.8,-1.0, 0);
+    glVertex3f(0.8, -1.0, 0);
+    glVertex3f(2.0, 0, 0);
+    glVertex3f(0.8, 1.0, 0);
+    glVertex3f(-0.8, 1.0, 0);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+    // glNormal3f(0, 0, -1);
+    glVertex3f(-0.8, 1.0, -.5);
+    glVertex3f(0.8, 1.0, -.5);
+    glVertex3f(2.0, 0, -.5);
+    glVertex3f(0.8, -1.0, -.5);
+    glVertex3f(-0.8,-1.0, -.5);
+    glVertex3f(-2.0, 0.0, -.5);
+  glEnd();
+
+  glBegin(GL_QUADS);
+
+  //top
+  glNormal3f(0, 1, 0);
+  glVertex3f(0.8, 1.0, -.5);
+  glVertex3f(-0.8, 1.0, -.5);
+  glVertex3f(-0.8, 1.0, 0);
+  glVertex3f(0.8, 1.0, 0);
+
+  //bottom
+  glNormal3f(0, -1, 0);
+  glVertex3f(-0.8, -1.0, -.5);
+  glVertex3f(0.8, -1.0, -.5);
+  glVertex3f(0.8, -1.0, 0);
+  glVertex3f(-0.8, -1.0, 0);
+
+
+  //upperleft
+  glVertex3f(2.0, 0, -0.5);
+  glVertex3f(0.8, 1.0, -0.5);
+  glVertex3f(0.8, 1.0, 0);
+  glVertex3f(2.0, 0, 0);
+
+
+  //lowerleft
+  glVertex3f(0.8, -1.0, -0.5);
+  glVertex3f(2.0, 0, -0.5);
+  glVertex3f(2.0, 0, 0);
+  glVertex3f(0.8, -1.0, 0);
+
+
+  //upperright
+  glVertex3f(-0.8, 1.0, -0.5);
+  glVertex3f(-2.0, 0, -0.5);
+  glVertex3f(-2.0, 0, 0);
+  glVertex3f(-0.8, 1.0, 0);
+
+
+  //lowerright
+  glVertex3f(-2.0, 0, -0.5);
+  glVertex3f(-0.8, -1.0, -0.5);
+  glVertex3f(-0.8, -1.0, 0);
+  glVertex3f(-2.0, 0, 0);
+
+  glEnd();
+  glPopMatrix();
+
+}
+
+
+void ringArtifact(double x, double y, double z) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  float Position[]  = {5*Cos(zh),ylight,5*Sin(zh),1};
+  ball(0, 0, 0, .1);
+  // double r, double c,
+  //              int rSeg, int cSeg, double x_t, double y_t, double z_t,
+  //              double x_r, double y_r, double z_r, double rotate
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 1, 0, zh);
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 0, 1, 1, zh);
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 0, 1, zh);
+
+  glPopMatrix();
+}
+
+void drawDoor(double x, double y, double z) {
+
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, texture[6]);
+
+//TODO Ask TA about how to correctly implement this
+  // glBegin(GL_TRIANGLE_FAN);
+  //     double radius = 2;
+  //     glTexCoord2f( 0.5, 0.5 );
+  //     glVertex3f(0, 2, 0);  /* center */
+  //     for (double i = 3.1415; i >= 0; i -= 3.1415 / 50)
+  //     {
+  //         glNormal3f(0,0,-1);
+  //         glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
+  //         // glVertex3f(0, .5 * cos(i), .5 * sin(i));
+  //         glVertex3f(radius * cos(i),radius * sin(i) + 2, 0);
+  //     }
+  // glEnd();
+
+  glBegin(GL_QUADS);
+
+  glNormal3f(0, 0, -1);
+
+  glTexCoord2f(0.0f, 0.0f); glVertex3f(2, -2, 0);
+  glTexCoord2f(1.0f, 0.0f); glVertex3f(-2, -2, 0);
+  glTexCoord2f(1.0f, 1.0f); glVertex3f(-2, 2, 0);
+  glTexCoord2f(0.0f, 1.0f); glVertex3f(2, 2, 0);
+
+
+  glEnd();
+
+  glDisable(GL_TEXTURE_2D);
+
+  glPopMatrix();
+
+}
+
+void displayPedistool(double x, double y, double z, double x_s, double y_s, 
+  double z_s, double x_r, double y_r, double z_r, double rotation) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rotation, x_r, y_r, z_r);
+  cylinder(0, 0, 0, 1, 2, 1, 0, 0, 0, 1, 10);
+  cylinder(0, 2, 0, 1.5, .5, 1.5, 0, 0, 0, 1, 10);
+  cylinder(0, 0, 0, 1.25, .5, 1.25, 0, 0, 0, 1, 10);
+  glPopMatrix();
+
+}
+
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
  */
@@ -477,43 +679,45 @@ void display()
       glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
       glEnable(GL_COLOR_MATERIAL);
       // //  Enable light 0
-      // glEnable(GL_LIGHT0);
-      // //  Set ambient, diffuse, specular components and position of light 0
-      // glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-      // glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-      // glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-      // glLightfv(GL_LIGHT0,GL_POSITION,Position);
+      glEnable(GL_LIGHT0);
+      //  Set ambient, diffuse, specular components and position of light 0
+      glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
+      glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
+      glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
+      glLightfv(GL_LIGHT0,GL_POSITION,Position);
       glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
    }
    else
       glDisable(GL_LIGHTING);
    //  Draw scene
    // icosahedron(.5, 0);
-   //Floor
-   plane(12, 12, -6, 0, 0, 0, 0, 0, -6, 0);
-   //Right Wall
-   plane(12, 6, -6, 90, 1, 0, 0, 0, -12, 0);
-   //Left Wall
-   plane(12, 6, -6, -90, 1, 0, 0, 0, -12, 0);
-   //Forward Wall
-   plane(6, 12, -6, 90, 0, 0, 1, 0, -12, 0);
-   //Backwards Wall
-   plane(6, 12, -6, -90, 0, 0, 1, 0, -12, 0);
-   //Ceiling
-   plane(12, 12, -6, 180, 0, 0, 1, 0, -6, 0);
+  drawBorders();
+  drawMantle(0, 0, -11, 1, 1, 1);
+  drawMantle(0, 0, -10.8, .8, .8, .8);
+  displayPedistool(10, -6, 0, 1.5, 2, 1.5, 0, 0, 0, 0);
+  displayPedistool(10, -6, -3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
+  displayPedistool(10, -6, 3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
 
    // plane(4, 2, -6, 90);
    icosahedron(0, -3.5, 0, .05, .05, .05);
 // double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
    flatTop(0, -4, 0, 1, 0, 0, 90, 5, 0.2, 6);
 
+   ringArtifact(10, 0.5, 0);
+   ringArtifact(10, -.5, 3);
+   ringArtifact(10, -.5, -3);
+
+   drawShelf(8, 0, 0);
+   drawShelf(-8, 0, 0);
    drawWallChains();
    cube(2.5, -5, 2.5, .3, 1, .3, 0);
    cube(-2.5, -5, 2.5, .3, 1, .3, 0);
    cube(-2.5, -5, -2.5, .3, 1, .3, 0);
    cube(2.5, -5, -2.5, .3, 1, .3, 0);
 
-   candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
+   drawDoor(0, 0, 11);
+
+   // candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
    // coin(0, 0, 0, 1, 1);
    //  Draw axes - no lighting from here on
    glDisable(GL_LIGHTING);
@@ -714,6 +918,9 @@ int main(int argc,char* argv[])
    texture[6] = LoadTexBMP("wood.bmp");
    texture[7] = LoadTexBMP("dice.bmp");
    texture[8] = LoadTexBMP("candle.bmp");
+   texture[9] = LoadTexBMP("floor.bmp");
+   texture[10] = LoadTexBMP("marble.bmp");
+   texture[11] = LoadTexBMP("stainglass.bmp");
    ErrCheck("init");
    glutMainLoop();
    return 0;
