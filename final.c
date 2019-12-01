@@ -12,6 +12,7 @@
  *  ESC        Exit
  */
 #include "CSCIx229.h"
+#include <stdbool.h>
 
 int mode=0;       //  Texture mode
 int ntex=0;       //  Cube faces
@@ -251,7 +252,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 
     glPushMatrix();
     glTranslated(x, y, z);
-    glRotatef(x_r, y_r, z_r, rotation);
+    glRotatef(rotation, x_r, y_r, z_r);
     glScaled(x_s, y_s, z_s);
 
     glEnable(GL_TEXTURE_2D);
@@ -502,23 +503,27 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(x_s, y_s, z_s);
-  glBegin(GL_POLYGON);
-    // glNormal3f(0, 0, 1);
-    glVertex3f(-2.0, 0.0, 0);
-    glVertex3f(-0.8,-1.0, 0);
-    glVertex3f(0.8, -1.0, 0);
+
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, texture[6]);
+
+  glBegin(GL_TRIANGLE_STRIP);
+    glNormal3f(0, 0, 1);
     glVertex3f(2.0, 0, 0);
     glVertex3f(0.8, 1.0, 0);
+    glVertex3f(0.8, -1.0, 0);  
     glVertex3f(-0.8, 1.0, 0);
+    glVertex3f(-0.8,-1.0, 0);
+    glVertex3f(-2.0, 0.0, 0);
   glEnd();
 
-  glBegin(GL_POLYGON);
-    // glNormal3f(0, 0, -1);
-    glVertex3f(-0.8, 1.0, -.5);
-    glVertex3f(0.8, 1.0, -.5);
+  glBegin(GL_TRIANGLE_STRIP);
+    glNormal3f(0, 0, -1);
     glVertex3f(2.0, 0, -.5);
-    glVertex3f(0.8, -1.0, -.5);
+    glVertex3f(0.8, -1.0, -.5);  
+    glVertex3f(0.8, 1.0, -.5);
     glVertex3f(-0.8,-1.0, -.5);
+    glVertex3f(-0.8, 1.0, -.5);
     glVertex3f(-2.0, 0.0, -.5);
   glEnd();
 
@@ -540,6 +545,7 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
 
   //upperleft
+  glNormal3f(1, 1, 0);
   glVertex3f(2.0, 0, -0.5);
   glVertex3f(0.8, 1.0, -0.5);
   glVertex3f(0.8, 1.0, 0);
@@ -547,6 +553,7 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
 
   //lowerleft
+  glNormal3f(1, -1, 0);
   glVertex3f(0.8, -1.0, -0.5);
   glVertex3f(2.0, 0, -0.5);
   glVertex3f(2.0, 0, 0);
@@ -554,6 +561,7 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
 
   //upperright
+  glNormal3f(-1, 1, 0);
   glVertex3f(-0.8, 1.0, -0.5);
   glVertex3f(-2.0, 0, -0.5);
   glVertex3f(-2.0, 0, 0);
@@ -561,6 +569,7 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
 
   //lowerright
+  glNormal3f(-1, -1, 0);
   glVertex3f(-2.0, 0, -0.5);
   glVertex3f(-0.8, -1.0, -0.5);
   glVertex3f(-0.8, -1.0, 0);
@@ -639,6 +648,78 @@ void displayPedistool(double x, double y, double z, double x_s, double y_s,
 
 }
 
+void drawSwordBlade(int rotated) {
+  glPushMatrix();
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, texture[3]);
+  if(rotated == 0) {
+   glRotatef(180, 1, 0, 0); 
+   glTranslated(0, -.1, -.1);
+  }
+
+
+  glBegin(GL_TRIANGLE_STRIP);
+  GLfloat N[3];
+  float v1[3] = {0, 0, 0};
+  float v2[3] = {0, -.2, .05};
+  float v3[3] = {-2, .05, .05};
+
+  calculateNormal(v1, v2, v3, N);
+
+  glTexCoord2f(0, 0);
+  glNormal3f(-1 * N[0], -1 * N[1], -1 * N[2]);
+    glVertex3f(0, 0, 0);
+    glTexCoord2f(0, 1);
+    glVertex3f(0, -.20, .05);
+    glTexCoord2f(.5, 1);
+    glVertex3f(-2, .05, .05);
+  glEnd();
+
+  glBegin(GL_TRIANGLE_STRIP);
+  glTexCoord2f(0, 0);
+    glVertex3f(0, .1, 0);
+    glTexCoord2f(0, 1);
+    glVertex3f(-2, .05, .05);
+    glTexCoord2f(.5, 1);
+    glVertex3f(0, .30, .05);
+
+  glEnd();
+
+  glBegin(GL_TRIANGLES);
+    glTexCoord2f(0, 0);
+    glVertex3f(0, 0, 0);
+    glTexCoord2f(0, 1);
+    glVertex3f(-2, .05, .05);
+    glTexCoord2f(0.5, 1);
+    glVertex3f(0, .05, .05);
+
+    glTexCoord2f(0, 0);
+    glVertex3f(0, .1, 0);
+    glTexCoord2f(0, 1);
+    glVertex3f(0, .05, .05);
+    glTexCoord2f(.5, 1);
+    glVertex3f(-2, .05, .05);
+  glEnd();
+
+
+  glPopMatrix();
+}
+
+
+void drawSword(float x, float y, float z, float x_s, float y_s, float z_s, float x_r, float y_r, float z_r, float rotation) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glRotated(rotation, x_r, y_r, z_r);
+  glScaled(x_s, y_s, z_s);
+  drawSwordBlade(0);
+  drawSwordBlade(1);
+  cube(0, .05, .05, .05, .3, .05, 0);
+  cylinder(1.05, .05, .05, .1, 1, .1, 0, 0, 1, 90, 3);
+  ball(1.1, .05, .05, .1);
+  glPopMatrix();
+
+}
+
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
  */
@@ -692,6 +773,7 @@ void display()
    //  Draw scene
    // icosahedron(.5, 0);
   drawBorders();
+  // drawMantle(0, 0, 0, 1, 1, 1);
   drawMantle(0, 0, -11, 1, 1, 1);
   drawMantle(0, 0, -10.8, .8, .8, .8);
   displayPedistool(10, -6, 0, 1.5, 2, 1.5, 0, 0, 0, 0);
@@ -716,6 +798,8 @@ void display()
    cube(2.5, -5, -2.5, .3, 1, .3, 0);
 
    drawDoor(0, 0, 11);
+   drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
+   drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
 
    // candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
    // coin(0, 0, 0, 1, 1);
