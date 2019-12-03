@@ -13,6 +13,7 @@
  */
 #include "CSCIx229.h"
 #include <stdbool.h>
+#include <math.h>
 
 int mode=0;       //  Texture mode
 int ntex=0;       //  Cube faces
@@ -32,7 +33,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-GLuint texture[12]; // Texture names
+GLuint texture[14]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -50,6 +51,146 @@ double f_ph = 0;
 
 GLUquadric* qobj;
 
+//Particle stuff
+
+int ParticleCount = 100;
+
+typedef struct {
+  double Xpos;
+  double Ypos;
+  double Zpos;
+  double Xmov;
+  double Zmov;
+  double Red;
+  double Green;
+  double Blue;
+  double Direction;
+  double Acceleration;
+  double Deceleration;
+  double Scalez;
+  bool Visible;
+}PARTICLES;
+
+PARTICLES Particle[500];
+
+void glCreateParticles (void) {
+  int i;
+  for (i = 1; i < ParticleCount; i++)
+  {
+    Particle[i].Xpos = 0;
+    Particle[i].Ypos = -5;
+    Particle[i].Zpos = -5;
+    Particle[i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * 
+    rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
+    ) * rand()%11) + 1) * 0.005);
+    Particle[i].Zmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * 
+    rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
+    ) * rand()%11) + 1) * 0.005);
+    Particle[i].Red = 1;
+    Particle[i].Green = 1;
+    Particle[i].Blue = 1;
+    Particle[i].Scalez = 0.25;
+    Particle[i].Direction = 0;
+    Particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5
+    ) -1 + 1) * rand()%11) + 1) * 0.02;
+    Particle[i].Deceleration = 0.0025;
+  }
+}
+
+/*
+ *  Draw a ball
+ *     at (x,y,z)
+ *     radius r
+ */
+static void ball(double x,double y,double z,double r)
+{
+   //  Save transformation
+   glPushMatrix();
+   //  Offset, scale and rotate
+   glTranslated(x,y,z);
+   glScaled(r,r,r);
+   glutSolidSphere(1.0,16,16);
+   //  Undo transofrmations
+   glPopMatrix();
+}
+
+
+static void glDrawParticles (void) {
+  int i;
+  for (i = 1; i < ParticleCount; i++)
+  {
+    glPushMatrix();
+
+    glTranslatef (Particle[i].Xpos, Particle[i].Ypos, Particle[i].Zpos);
+    glRotatef (Particle[i].Direction - 90, 0, 0, 1);
+
+    glScalef (Particle[i].Scalez, Particle[i].Scalez, Particle[i].Scalez);
+
+    glDisable (GL_DEPTH_TEST);
+    glEnable (GL_BLEND);
+      
+    glBlendFunc (GL_DST_COLOR, GL_ZERO);
+    glBindTexture (GL_TEXTURE_2D, texture[0]);
+
+    ball(0, 0, 0, .5);
+
+    glBlendFunc (GL_ONE, GL_ONE);
+    glBindTexture (GL_TEXTURE_2D, texture[1]);
+
+    glBegin (GL_QUADS);
+    glTexCoord2d (0, 0);
+    glVertex3f (-1, -1, 0);
+    glTexCoord2d (1, 0);
+    glVertex3f (1, -1, 0);
+    glTexCoord2d (1, 1);
+    glVertex3f (1, 1, 0);
+    glTexCoord2d (0, 1);
+    glVertex3f (-1, 1, 0);
+    glEnd();
+      
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+
+    glPopMatrix();
+
+  }
+  }
+
+void glUpdateParticles (void) {
+  int i;
+  for (i = 1; i < ParticleCount; i++)
+    {
+
+    glColor3f (Particle[i].Red, Particle[i].Green, 
+    Particle[i].Blue);
+
+    Particle[i].Ypos = Particle[i].Ypos + Particle[i]
+    .Acceleration - Particle[i].Deceleration;
+    Particle[i].Deceleration = Particle[i].Deceleration + 
+    0.0025;
+
+    Particle[i].Xpos = Particle[i].Xpos + Particle[i].Xmov;
+    Particle[i].Zpos = Particle[i].Zpos + Particle[i].Zmov;
+
+    Particle[i].Direction = Particle[i].Direction + ((((((int
+    )(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
+
+    if (Particle[i].Ypos < -5 || Particle[i].Xpos > 1 || Particle[i].Ypos > 1)
+    {
+    Particle[i].Xpos = 0;
+    Particle[i].Ypos = -5;
+    Particle[i].Zpos = -5;
+    Particle[i].Red = 1;
+    Particle[i].Green = 0;
+    Particle[i].Blue = 0;
+    Particle[i].Direction = 0;
+    Particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5
+    ) - 1 + 1) * rand()%11) + 1) * 0.01;
+    Particle[i].Deceleration = 0.0025;
+    }
+
+  }
+}
 
 
 float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
@@ -70,24 +211,6 @@ float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
 
     return N;
 
-}
-/*
- *  Draw a ball
- *     at (x,y,z)
- *     radius r
- */
-static void ball(double x,double y,double z,double r)
-{
-   //  Save transformation
-   glPushMatrix();
-   //  Offset, scale and rotate
-   glTranslated(x,y,z);
-   glScaled(r,r,r);
-   //  White ball
-   glColor3f(1,1,1);
-   glutSolidSphere(1.0,16,16);
-   //  Undo transofrmations
-   glPopMatrix();
 }
 
 static void flatTop(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, 
@@ -245,7 +368,6 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 {
     const double PI = 3.14159;
 
-    /* top triangle */
     double i, resolution  = 0.1;
     double height = 1;
     double radius = 0.5;
@@ -260,7 +382,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 
     glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f( 0.5, 0.5 );
-        glVertex3f(0, height, 0);  /* center */
+        glVertex3f(0, height, 0);
         for (i = 2 * PI; i >= 0; i -= resolution)
 
         {
@@ -268,15 +390,13 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
             glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
             glVertex3f(radius * cos(i), height, radius * sin(i));
         }
-        /* close the loop back to 0 degrees */
         glTexCoord2f( 0.5, 0.5 );
         glVertex3f(radius, height, 0);
     glEnd();
 
-    /* bottom triangle: note: for is in reverse order */
     glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f( 0.5, 0.5 );
-        glVertex3f(0, 0, 0);  /* center */
+        glVertex3f(0, 0, 0);  
         for (i = 0; i <= 2 * PI; i += resolution)
         {
             glNormal3f(0,0,-1);
@@ -285,7 +405,6 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
         }
     glEnd();
 
-    /* middle tube */
     glBegin(GL_QUAD_STRIP);
         for (i = 0; i <= 2 * PI; i += resolution)
         {
@@ -296,7 +415,6 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
             glTexCoord2f( tc, 1.0 );
             glVertex3f(radius * cos(i), height, radius * sin(i));
         }
-        /* close the loop back to zero degrees */
         glTexCoord2f( 0.0, 0.0 );
         glVertex3f(radius, 0, 0);
         glTexCoord2f( 0.0, 1.0 );
@@ -307,7 +425,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 }
 
 
-static void plane(float width, float height, float pos, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex) {
+static void plane(float width, float height, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex, float repeat) {
    glPushMatrix();
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, texture[tex]);
@@ -321,13 +439,13 @@ static void plane(float width, float height, float pos, float rotate, float x_r,
    glTexCoord2f(0.0f, 0.0f);
    glVertex3f(-1.0 * width, 0, height);
 
-   glTexCoord2f(1.0f, 0.0f);
+   glTexCoord2f(repeat, 0.0f);
    glVertex3f( width, 0, height);
 
-   glTexCoord2f(1.0f, 1.0f);  
+   glTexCoord2f(repeat, repeat);  
    glVertex3f( width, 0, -1.0 * height);
 
-   glTexCoord2f(0.0f, 1.0f);
+   glTexCoord2f(0.0f, repeat);
    glVertex3f(-1.0 * width, 0, -1.0 * height);
 
 
@@ -336,6 +454,7 @@ glDisable(GL_TEXTURE_2D);
 glPopMatrix();
 }
 
+//SECTION FOR DRAWING DICE
 static void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
    glPushMatrix();
    glEnable(GL_TEXTURE_2D);
@@ -397,6 +516,7 @@ glEnd();
    glPopMatrix();
 }
 
+// TODO ZL Reimplement with candle
 static void cone(double x, double y, double z, double x_s, double y_s, double z_s, 
   double x_t, double y_t, double z_t, double rotation, int tex) {
   glPushMatrix();
@@ -409,7 +529,7 @@ static void cone(double x, double y, double z, double x_s, double y_s, double z_
   glBegin(GL_TRIANGLE_FAN);
   glVertex3f(0, 0, 0);
   GLfloat v1[3] = {0, 0, 0};
-  for (double i = 0; i <= twopi; i += twopi / 50) {
+  for (double i = 0; i <= twopi + twopi/50; i += twopi / 50) {
     GLfloat N[3];
     GLfloat v2[3] = {2*sin(i), -2, 2*cos(i)};
     GLfloat v3[3] = {2*sin(i - (twopi / 50)), -2, 2*cos(i-(twopi/50))};
@@ -424,33 +544,60 @@ static void cone(double x, double y, double z, double x_s, double y_s, double z_
   glPopMatrix();
 }
 
-static void candle(double x, double y, double z, double x_s, double y_s, double z_s,
-  double x_t, double y_t, double z_t, double rotation) {
+// TODO ZL Talk to a TA about proper lighting implementation
+// static void candle(double x, double y, double z, double x_s, double y_s, double z_s,
+//   double x_t, double y_t, double z_t, double rotation) {
+//   glPushMatrix();
+//   glTranslated(x, y, z);
+//   glScaled(x_s, y_s, z_s);
+//   glRotatef(rotation, x_t, y_t, z_t);
+//   cone(0, 0, 0, .5, .5, .5, -1, 0, 0, 90, 8);
+//   cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0, 8);
+//   glPopMatrix();
+
+//   float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
+//   float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
+//   float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
+//   //  Light direction
+//   float Position[]  = {x, y + 1, z, 1};
+//   //  Draw light position as ball (still no lighting here)
+//   glColor3f(1,1,1);
+//   ball(Position[0],Position[1],Position[2] , 0.1);
+//   //  glColor sets ambient and diffuse color materials
+//   //  Enable light 0
+//   glEnable(GL_LIGHT0);
+//   //  Set ambient, diffuse, specular components and position of light 0
+//   glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
+//   glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
+//   glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
+//   glLightfv(GL_LIGHT0,GL_POSITION,Position);
+//   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
+
+// }
+
+void drawChairs(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
   glPushMatrix();
   glTranslated(x, y, z);
   glScaled(x_s, y_s, z_s);
-  glRotatef(rotation, x_t, y_t, z_t);
-  cone(0, 0, 0, .5, .5, .5, -1, 0, 0, 90, 8);
-  cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0, 8);
+  glRotatef(rot, x_r, y_r, z_r);
+  //Draw base
+  cube(0, 0, 0, .3, .05, .3, 0);
+  //Draw legs
+  cube(-.25, -.35, -.25, .05, .3, .05, 0);
+  cube(-.25, -.35, .25, .05, .3, .05, 0);
+  cube(.25, -.35, -.25, .05, .3, .05, 0);
+  cube(.25, -.35, .25, .05, .3, .05, 0);
+  //Draw back
+  cube(.25, .35, -.25, .05, .3, .05, 0);
+  cube(.25, .35, .25, .05, .3, .05, 0);
+
+  cube(.25, .5, 0, .05, .05, .2, 0);
+  cube(.25, .3, 0, .05, .05, .2, 0);
+  cube(.25, .1, 0, .05, .05, .2, 0);
+
   glPopMatrix();
 
-  float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
-  float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
-  float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
-  //  Light direction
-  float Position[]  = {x, y + 1, z, 1};
-  //  Draw light position as ball (still no lighting here)
-  glColor3f(1,1,1);
-  ball(Position[0],Position[1],Position[2] , 0.1);
-  //  glColor sets ambient and diffuse color materials
-  //  Enable light 0
-  glEnable(GL_LIGHT0);
-  //  Set ambient, diffuse, specular components and position of light 0
-  glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-  glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-  glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-  glLightfv(GL_LIGHT0,GL_POSITION,Position);
-  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
+
 
 }
 
@@ -468,17 +615,17 @@ void drawWallChains() {
 
 void drawBorders() {
    //Floor
-   plane(12, 12, -6, 0, 0, 0, 0, 0, -6, 0, 9);
+   plane(12, 12, 0, 0, 0, 0, 0, -6, 0, 9, 1);
    //Right Wall
-   plane(12, 6, -6, 90, 1, 0, 0, 0, -12, 0, 4);
+   plane(12, 6, 90, 1, 0, 0, 0, -12, 0, 4, 1);
    //Left Wall
-   plane(12, 6, -6, -90, 1, 0, 0, 0, -12, 0, 4);
+   plane(12, 6, -90, 1, 0, 0, 0, -12, 0, 4, 1);
    //Forward Wall
-   plane(6, 12, -6, 90, 0, 0, 1, 0, -12, 0, 4);
+   plane(6, 12, 90, 0, 0, 1, 0, -12, 0, 4, 1);
    //Backwards Wall
-   plane(6, 12, -6, -90, 0, 0, 1, 0, -12, 0, 4);
+   plane(6, 12, -90, 0, 0, 1, 0, -12, 0, 4, 1);
    //Ceiling
-   plane(12, 12, -6, 180, 0, 0, 1, 0, -6, 0, 4);
+   plane(12, 12, 180, 0, 0, 1, 0, -6, 0, 4, 1);
 }
 
 void drawShelf(double x, double y, double z) {
@@ -584,11 +731,7 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 void ringArtifact(double x, double y, double z) {
   glPushMatrix();
   glTranslated(x, y, z);
-  float Position[]  = {5*Cos(zh),ylight,5*Sin(zh),1};
   ball(0, 0, 0, .1);
-  // double r, double c,
-  //              int rSeg, int cSeg, double x_t, double y_t, double z_t,
-  //              double x_r, double y_r, double z_r, double rotate
   drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 1, 0, zh);
   drawTorus(.01, .30, 20, 10, 0, 0, 0, 0, 1, 1, zh);
   drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 0, 1, zh);
@@ -720,6 +863,104 @@ void drawSword(float x, float y, float z, float x_s, float y_s, float z_s, float
 
 }
 
+void drawTable() {
+  glPushMatrix();
+
+  cube(2.5, -4.5, 2.5, .3, 1.5, .3, 0);
+  cube(-2.5, -4.5, 2.5, .3, 1.5, .3, 0);
+  cube(-2.5, -4.5, -2.5, .3, 1.5, .3, 0);
+  cube(2.5, -4.5, -2.5, .3, 1.5, .3, 0);
+
+  flatTop(0, -3, 0, 1, 0, 0, 90, 5, 0.2, 6);
+
+
+  glPopMatrix();
+
+}
+
+void drawGamePeices(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot, int mode) {
+    glPushMatrix();
+    glTranslated(x, y, z);
+    glScaled(x_s, y_s, z_s);
+    glRotatef(rot, x_r, y_r, z_r);
+    glEnable(GL_TEXTURE_2D);
+    switch (mode){
+      case 0 :
+        glColor3f(0, 0, 1);
+        break;
+      case 1 :
+        glColor3f(1, 0, 0);
+        break;
+      case 2:
+        glColor3f(0, 1, 0);
+        break;
+      case 3:
+        glColor3f(0.85882, 0.439216, 0.576471);
+        break;
+      default:
+        glColor3f(0, 0, 1);
+    }
+    ball(0, 1.25, 0, .25);
+    cylinder(0, 0, 0, 1, .1, 1, 0, 0, 0, 0, 3);
+    cone(0, 1.1, 0, .25, .5, .25, 0, 0, 0, 0, 3);
+    cylinder(.8, .5, 0, .2, .7, .2, 0, 0, 1, 90, 3);
+    cylinder(-.1, .5, 0, .2, .7, .2, 0, 0, 1, 90, 3);
+    drawSword(.8, .8, 0, .4, .4, .4, 0, 0, 1, -90);
+
+
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+
+}
+
+void drawBoardGame() {
+  plane(2, 2, 0, 0, 0, 0, 0, -2.7, 0, 12, 8);
+  //DRAW ON BOARD PEICES
+  //Blue peices
+  drawGamePeices(1.3, -2.7, 0, .1, .1, .1, 0, 1, 0, 82, 0);
+  drawGamePeices(.2, -2.7, 0, .1, .1, .1, 0, 1, 0, 27, 0);
+  drawGamePeices(.98, -2.7, .2, .1, .1, .1, 0, 1, 0, 46, 0);
+  drawGamePeices(.42, -2.7, .1, .1, .1, .1, 0, 1, 0, 16, 0);
+  drawGamePeices(.05, -2.7, .4, .1, .1, .1, 0, 1, 0, 80, 0);
+  drawGamePeices(.3, -2.7, .5, .1, .1, .1, 0, 1, 0, 20, 0);
+  drawGamePeices(.2, -2.7, .1, .1, .1, .1, 0, 1, 0, 5, 0);
+  drawGamePeices(0, -2.7, 0, .1, .1, .1, 0, 1, 0, 10, 0);
+  //Red peices
+  drawGamePeices(-.5, -2.7, .42, .1, .1, .1, 0, 1, 0, 20, 1);
+  drawGamePeices(-.6, -2.7, -.65, .1, .1, .1, 0, 1, 0, 15, 1);
+  drawGamePeices(-.74, -2.7, -.12, .1, .1, .1, 0, 1, 0, 46, 1);
+  drawGamePeices(-.73, -2.7, .32, .1, .1, .1, 0, 1, 0, 98, 1);
+  drawGamePeices(-.24, -2.7, .42, .1, .1, .1, 0, 1, 0, 124, 1);
+  drawGamePeices(-.7, -2.7, .12, .1, .1, .1, 0, 1, 0, 41, 1);
+  drawGamePeices(-.9, -2.7, -.23, .1, .1, .1, 0, 1, 0, 162, 1);
+  //Green peices
+  drawGamePeices(.5, -2.7, -.42, .1, .1, .1, 0, 1, 0, 20, 2);
+  drawGamePeices(.6, -2.7, -.65, .1, .1, .1, 0, 1, 0, 15, 2);
+  drawGamePeices(.74, -2.7, -.12, .1, .1, .1, 0, 1, 0, 46, 2);
+  drawGamePeices(.73, -2.7, -.32, .1, .1, .1, 0, 1, 0, 98, 2);
+  drawGamePeices(.24, -2.7, -.42, .1, .1, .1, 0, 1, 0, 124, 2);
+  drawGamePeices(.7, -2.7, -.12, .1, .1, .1, 0, 1, 0, 41, 2);
+  drawGamePeices(.9, -2.7, -.23, .1, .1, .1, 0, 1, 0, 162, 2);
+
+  //Purple peices
+  drawGamePeices(-.5, -2.7, -.42, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.1, -2.7, -1.2, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.6, -2.7, -.8, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.05, -2.7, -1.7, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.38, -2.7, -1.14, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.4, -2.7, -1.8, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.2, -2.7, -1.9, .1, .1, .1, 0, 1, 0, 20, 3);
+  drawGamePeices(.6, -2.7, -1.2, .1, .1, .1, 0, 1, 0, 20, 3);
+
+  //DRAW OFF BOARD PEICES
+  //Blue
+  drawGamePeices(4, -2.7, 0, .1, .1, .1, 1,0, 0, 90, 0);
+  drawGamePeices(4, -2.7, .5, .1, .1, .1, 0,1, 0, 10, 0);
+  drawGamePeices(4, -2.7, 0, .1, .1, .1, 1,0, 0, 90, 0);
+
+}
+
+
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
  */
@@ -780,10 +1021,14 @@ void display()
   displayPedistool(10, -6, -3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
   displayPedistool(10, -6, 3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
 
+  drawChairs(0, -4, -5.5, 3, 3, 3, 0 ,1 ,0, 120);
+  drawChairs(-5.5, -4, 0, 3, 3, 3, 0 ,1 ,0, 180);
+  drawChairs(5.5, -4, 0, 3, 3, 3, 0 ,1 ,0, 10);
+  drawChairs(0, -4, 5.5, 3, 3, 3, 0 ,1 ,0, 270);
+
    // plane(4, 2, -6, 90);
    icosahedron(0, -3.5, 0, .05, .05, .05);
 // double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
-   flatTop(0, -4, 0, 1, 0, 0, 90, 5, 0.2, 6);
 
    ringArtifact(10, 0.5, 0);
    ringArtifact(10, -.5, 3);
@@ -792,18 +1037,20 @@ void display()
    drawShelf(8, 0, 0);
    drawShelf(-8, 0, 0);
    drawWallChains();
-   cube(2.5, -5, 2.5, .3, 1, .3, 0);
-   cube(-2.5, -5, 2.5, .3, 1, .3, 0);
-   cube(-2.5, -5, -2.5, .3, 1, .3, 0);
-   cube(2.5, -5, -2.5, .3, 1, .3, 0);
 
+   drawTable();
    drawDoor(0, 0, 11);
    drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
    drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
+   drawBoardGame();
+
+
 
    // candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
    // coin(0, 0, 0, 1, 1);
    //  Draw axes - no lighting from here on
+   glUpdateParticles();
+   glDrawParticles();
    glDisable(GL_LIGHTING);
    glColor3f(1,1,1);
    if (axes)
@@ -826,12 +1073,12 @@ void display()
    }
    //  Display parameters
    glWindowPos2i(5,5);
-   Print("Angle=%d,%d  Dim=%.1f Light=%s Texture=%s",th,ph,dim,light?"On":"Off",mode?"Replace":"Modulate");
-   if (light)
-   {
-      glWindowPos2i(5,25);
-      Print("Ambient=%d  Diffuse=%d Specular=%d Emission=%d Shininess=%.0f",ambient,diffuse,specular,emission,shiny);
-   }
+   // Print("Angle=%d,%d  Dim=%.1f Light=%s Texture=%s",th,ph,dim,light?"On":"Off",mode?"Replace":"Modulate");
+   // if (light)
+   // {
+   //    glWindowPos2i(5,25);
+   //    Print("Ambient=%d  Diffuse=%d Specular=%d Emission=%d Shininess=%.0f",ambient,diffuse,specular,emission,shiny);
+   // }
    //  Render the scene and make it visible
    ErrCheck("display");
    glFlush();
@@ -1005,7 +1252,10 @@ int main(int argc,char* argv[])
    texture[9] = LoadTexBMP("floor.bmp");
    texture[10] = LoadTexBMP("marble.bmp");
    texture[11] = LoadTexBMP("stainglass.bmp");
+   texture[12] = LoadTexBMP("boardgame.bmp");
+   glCreateParticles();
    ErrCheck("init");
+
    glutMainLoop();
    return 0;
 }
