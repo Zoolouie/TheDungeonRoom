@@ -14,6 +14,7 @@
 #include "CSCIx229.h"
 #include <stdbool.h>
 #include <math.h>
+#include <time.h>
 
 int mode=0;       //  Texture mode
 int ntex=0;       //  Cube faces
@@ -33,7 +34,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-GLuint texture[14]; // Texture names
+GLuint texture[17]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -53,7 +54,7 @@ GLUquadric* qobj;
 
 //Particle stuff
 
-int ParticleCount = 100;
+int ParticleCount = 200;
 
 typedef struct {
   double Xpos;
@@ -71,15 +72,18 @@ typedef struct {
   bool Visible;
 }PARTICLES;
 
-PARTICLES Particle[500];
+PARTICLES Particle1[500];
+PARTICLES Particle2[500];
+PARTICLES Particle3[500];
+PARTICLES Particle4[500];
 
-void glCreateParticles (void) {
+void glCreateParticles (double x, double y, double z, PARTICLES Particle[]) {
   int i;
   for (i = 1; i < ParticleCount; i++)
   {
-    Particle[i].Xpos = 0;
-    Particle[i].Ypos = -5;
-    Particle[i].Zpos = -5;
+    Particle[i].Xpos = x;
+    Particle[i].Ypos = y;
+    Particle[i].Zpos = z;
     Particle[i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * 
     rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
     ) * rand()%11) + 1) * 0.005);
@@ -87,13 +91,14 @@ void glCreateParticles (void) {
     rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
     ) * rand()%11) + 1) * 0.005);
     Particle[i].Red = 1;
-    Particle[i].Green = 1;
-    Particle[i].Blue = 1;
+    Particle[i].Green = 0;
+    Particle[i].Blue = 0;
     Particle[i].Scalez = 0.25;
     Particle[i].Direction = 0;
-    Particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5
-    ) -1 + 1) * rand()%11) + 1) * 0.02;
-    Particle[i].Deceleration = 0.0025;
+    Particle[i].Acceleration = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * 
+    rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
+    ) * rand()%11) + 1) * 0.005);
+    Particle[i].Deceleration = 0.025;
   }
 }
 
@@ -114,8 +119,7 @@ static void ball(double x,double y,double z,double r)
    glPopMatrix();
 }
 
-
-static void glDrawParticles (void) {
+static void glDrawParticles (PARTICLES Particle[]) {
   int i;
   for (i = 1; i < ParticleCount; i++)
   {
@@ -126,69 +130,72 @@ static void glDrawParticles (void) {
 
     glScalef (Particle[i].Scalez, Particle[i].Scalez, Particle[i].Scalez);
 
-    glDisable (GL_DEPTH_TEST);
-    glEnable (GL_BLEND);
       
-    glBlendFunc (GL_DST_COLOR, GL_ZERO);
-    glBindTexture (GL_TEXTURE_2D, texture[0]);
+    // glBlendFunc (GL_DST_COLOR, GL_ZERO);
+    // glBindTexture (GL_TEXTURE_2D, texture[0]);
 
-    ball(0, 0, 0, .5);
+    // ball(0, 0, 0, .5);
 
     glBlendFunc (GL_ONE, GL_ONE);
-    glBindTexture (GL_TEXTURE_2D, texture[1]);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture (GL_TEXTURE_2D, texture[10]);
 
-    glBegin (GL_QUADS);
+    if (i % 3 == 0) {
+      glColor3f (1, 0.2, 0);
+    } else if (i % 3 == 1){
+      glColor3f(1, 0, 0);
+    } else {
+      glColor3f(1,1, 0);
+    }
+    glDisable(GL_CULL_FACE);
+    glBegin (GL_TRIANGLES);
     glTexCoord2d (0, 0);
     glVertex3f (-1, -1, 0);
     glTexCoord2d (1, 0);
     glVertex3f (1, -1, 0);
-    glTexCoord2d (1, 1);
+    glTexCoord2d (0.5, 1);
     glVertex3f (1, 1, 0);
-    glTexCoord2d (0, 1);
-    glVertex3f (-1, 1, 0);
     glEnd();
-      
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
 
     glPopMatrix();
 
   }
   }
 
-void glUpdateParticles (void) {
+void glUpdateParticles (double x, double y, double z, PARTICLES Particle[]) {
   int i;
   for (i = 1; i < ParticleCount; i++)
     {
 
-    glColor3f (Particle[i].Red, Particle[i].Green, 
-    Particle[i].Blue);
+    Particle[i].Ypos = Particle[i].Ypos + fabs(Particle[i].Acceleration) * .5;
 
-    Particle[i].Ypos = Particle[i].Ypos + Particle[i]
-    .Acceleration - Particle[i].Deceleration;
-    Particle[i].Deceleration = Particle[i].Deceleration + 
-    0.0025;
-
-    Particle[i].Xpos = Particle[i].Xpos + Particle[i].Xmov;
-    Particle[i].Zpos = Particle[i].Zpos + Particle[i].Zmov;
+    Particle[i].Xpos = Particle[i].Xpos + Particle[i].Xmov * .1;
+    Particle[i].Zpos = Particle[i].Zpos + Particle[i].Zmov * .1;
 
     Particle[i].Direction = Particle[i].Direction + ((((((int
     )(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
 
-    if (Particle[i].Ypos < -5 || Particle[i].Xpos > 1 || Particle[i].Ypos > 1)
+    if (Particle[i].Ypos < y - 0.1 || Particle[i].Ypos > y + 1.5 || Particle[i].Xpos > x + 0.5 || Particle[i].Xpos < x - 0.5 || Particle[i].Zpos < z - 0.5 || Particle[i].Zpos > z + 0.5)
     {
-    Particle[i].Xpos = 0;
-    Particle[i].Ypos = -5;
-    Particle[i].Zpos = -5;
-    Particle[i].Red = 1;
-    Particle[i].Green = 0;
-    Particle[i].Blue = 0;
+    Particle[i].Xpos = x;
+    Particle[i].Ypos = y;
+    Particle[i].Zpos = z;
+    if (i % 2 == 1) {
+      Particle[i].Red = 1;
+      Particle[i].Green = 0;
+      Particle[i].Blue = 0;      
+    } else {
+      Particle[i].Red = 1;
+      Particle[i].Green = .2;
+      Particle[i].Blue = 0;
+    }
+
     Particle[i].Direction = 0;
     Particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5
     ) - 1 + 1) * rand()%11) + 1) * 0.01;
     Particle[i].Deceleration = 0.0025;
     }
-
   }
 }
 
@@ -257,19 +264,20 @@ static void flatTop(double x,double y,double z, double x_r, double y_r, double z
 
 static void cube(double x,double y,double z,
                  double dx,double dy,double dz,
-                 double th)
+                 double x_r, double y_r, double z_r,
+                 double th, int tex)
 {
   glPushMatrix();
    //  Save transformation
 
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D, texture[6]);
+   glBindTexture(GL_TEXTURE_2D, texture[tex]);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 
    //  Offset
    glTranslated(x,y,z);
-   glRotated(th,0,1,0);
+   glRotated(th,x_r,y_r,z_r);
    glScaled(dx,dy,dz);
     glColor3f(1,1,1);
    //  Cube
@@ -533,6 +541,7 @@ static void cone(double x, double y, double z, double x_s, double y_s, double z_
     GLfloat N[3];
     GLfloat v2[3] = {2*sin(i), -2, 2*cos(i)};
     GLfloat v3[3] = {2*sin(i - (twopi / 50)), -2, 2*cos(i-(twopi/50))};
+    glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
     calculateNormal(v1, v2, v3, N);
     glNormal3fv(&N[0]);
 
@@ -581,19 +590,19 @@ void drawChairs(double x, double y, double z, double x_s, double y_s, double z_s
   glScaled(x_s, y_s, z_s);
   glRotatef(rot, x_r, y_r, z_r);
   //Draw base
-  cube(0, 0, 0, .3, .05, .3, 0);
+  cube(0, 0, 0, .3, .05, .3, 0, 1, 0, 0, 6);
   //Draw legs
-  cube(-.25, -.35, -.25, .05, .3, .05, 0);
-  cube(-.25, -.35, .25, .05, .3, .05, 0);
-  cube(.25, -.35, -.25, .05, .3, .05, 0);
-  cube(.25, -.35, .25, .05, .3, .05, 0);
+  cube(-.25, -.35, -.25, .05, .3, .05, 0, 0, 0, 0, 6);
+  cube(-.25, -.35, .25, .05, .3, .05, 0, 0, 0, 0, 6);
+  cube(.25, -.35, -.25, .05, .3, .05, 0, 0, 0, 0, 6);
+  cube(.25, -.35, .25, .05, .3, .05, 0, 0, 0, 0, 6);
   //Draw back
-  cube(.25, .35, -.25, .05, .3, .05, 0);
-  cube(.25, .35, .25, .05, .3, .05, 0);
+  cube(.25, .35, -.25, .05, .3, .05, 0, 0, 0, 0, 6);
+  cube(.25, .35, .25, .05, .3, .05, 0, 0, 0, 0, 6);
 
-  cube(.25, .5, 0, .05, .05, .2, 0);
-  cube(.25, .3, 0, .05, .05, .2, 0);
-  cube(.25, .1, 0, .05, .05, .2, 0);
+  cube(.25, .5, 0, .05, .05, .2, 0, 0, 0, 0, 6);
+  cube(.25, .3, 0, .05, .05, .2, 0, 0, 0, 0, 6);
+  cube(.25, .1, 0, .05, .05, .2, 0, 0, 0, 0, 6);
 
   glPopMatrix();
 
@@ -601,46 +610,53 @@ void drawChairs(double x, double y, double z, double x_s, double y_s, double z_s
 
 }
 
-void drawWallChains() {
-   drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 3.0, 3, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 2.0, 2, 0, 1, 0, 90);
+void drawWallChains(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
 
-   drawTorus(.10, .30, 20, 8, -12, 5, -3, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 4.0, -2, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
-   drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 3.0, 3, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 2.0, 2, 0, 1, 0, 90);
+
+  drawTorus(.10, .30, 20, 8, -12, 5, -3, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 4.0, -2, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
+
+  glPopMatrix();
 }
 
 void drawBorders() {
    //Floor
    plane(12, 12, 0, 0, 0, 0, 0, -6, 0, 9, 1);
    //Right Wall
-   plane(12, 6, 90, 1, 0, 0, 0, -12, 0, 4, 1);
+   plane(12, 6, 90, 1, 0, 0, 0, -12, 0, 14, 4);
    //Left Wall
-   plane(12, 6, -90, 1, 0, 0, 0, -12, 0, 4, 1);
+   plane(12, 6, -90, 1, 0, 0, 0, -12, 0, 14, 4);
    //Forward Wall
-   plane(6, 12, 90, 0, 0, 1, 0, -12, 0, 4, 1);
+   plane(6, 12, 90, 0, 0, 1, 0, -12, 0, 14, 4);
    //Backwards Wall
-   plane(6, 12, -90, 0, 0, 1, 0, -12, 0, 4, 1);
+   plane(6, 12, -90, 0, 0, 1, 0, -12, 0, 14, 4);
    //Ceiling
-   plane(12, 12, 180, 0, 0, 1, 0, -6, 0, 4, 1);
+   plane(12, 12, 180, 0, 0, 1, 0, -6, 0, 14, 4);
 }
 
 void drawShelf(double x, double y, double z) {
   glPushMatrix();
   glTranslated(x, y, z);
   //SideShelves
-   cube(2.5, -1, 11, .3, 5, 1, 0);
-   cube(-2.5, -1, 11, .3, 5, 1, 0);
+   cube(2.5, -1, 11, .3, 5, 1, 0, 0, 0, 0, 6);
+   cube(-2.5, -1, 11, .3, 5, 1, 0, 0, 0, 0, 6);
    //BackBoard
-   cube(0, -1, 12, 2.8, 5, .1, 0);
+   cube(0, -1, 12, 2.8, 5, .1, 0, 0, 0, 0, 6);
 
    //Shelves
-   cube(0, -1, 11, 2.2, .1, 1, 0);
-   cube(0, -6, 11, 2.2, .1, 1, 0);
-   cube(0, 3.9, 11, 2.2, .1, 1, 0);
+   cube(0, -1, 11, 2.2, .1, 1, 0, 0, 0, 0, 6);
+   cube(0, -6, 11, 2.2, .1, 1, 0, 0, 0, 0, 6);
+   cube(0, 3.9, 11, 2.2, .1, 1, 0, 0, 0, 0, 6);
 
    glPopMatrix();
 
@@ -856,7 +872,7 @@ void drawSword(float x, float y, float z, float x_s, float y_s, float z_s, float
   glScaled(x_s, y_s, z_s);
   drawSwordBlade(0);
   drawSwordBlade(1);
-  cube(0, .05, .05, .05, .3, .05, 0);
+  cube(0, .05, .05, .05, .3, .05, 0, 0, 0, 0, 6);
   cylinder(1.05, .05, .05, .1, 1, .1, 0, 0, 1, 90, 3);
   ball(1.1, .05, .05, .1);
   glPopMatrix();
@@ -866,16 +882,54 @@ void drawSword(float x, float y, float z, float x_s, float y_s, float z_s, float
 void drawTable() {
   glPushMatrix();
 
-  cube(2.5, -4.5, 2.5, .3, 1.5, .3, 0);
-  cube(-2.5, -4.5, 2.5, .3, 1.5, .3, 0);
-  cube(-2.5, -4.5, -2.5, .3, 1.5, .3, 0);
-  cube(2.5, -4.5, -2.5, .3, 1.5, .3, 0);
+  cube(2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(-2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(-2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
 
   flatTop(0, -3, 0, 1, 0, 0, 90, 5, 0.2, 6);
 
 
   glPopMatrix();
 
+}
+
+void drawTorchClaw(double x, double y, double z, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glRotatef(rot, x_r, y_r, z_r);
+  cube(0, 1.09, 0, .05, .1, .001, 1, 0, 0, -20, 3);
+  cube(0, 1.275, 0, .05, .1, .001, 1, 0, 0, 20, 3); 
+
+  glPopMatrix();
+}
+
+
+void drawTorch(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
+
+  cone(0, 0, 0, .1, .5, .1, 1, 0, 0, 180, 6);
+  cylinder(0, 1, 0, .4, .001, .4, 0, 0, 0, 0, 3);
+
+  drawTorchClaw(0, 0, -.225, 0, 0, 0, 0);
+  drawTorchClaw(0, 0, .225, 0, 1, 0, 180);
+
+  drawTorchClaw(.217, 0, .10, 0, 1, 0, 240);
+  drawTorchClaw(-.217, 0, -.10, 0, 1, 0, 60);
+
+  drawTorchClaw(-0.195, 0, .1125, 0, 1, 0, 120);
+  drawTorchClaw(0.195, 0, -.1125, 0, 1, 0, 300);
+
+  drawTorus(.01, .11, 5, 8, 0, 1, 0, 1, 0,0 , 90);
+
+  drawTorus(.01, .05, 5, 8, 0, .5, 0, 1, 0,0 , 90);
+
+  cube(.215, .5, 0, .1, .015, .001, 0, 0, 0, 0, 3); 
+  cube(.315, .5, 0, .001, .15, .07, 0, 0, 0, 0, 3);
+  glPopMatrix(); 
 }
 
 void drawGamePeices(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot, int mode) {
@@ -960,6 +1014,21 @@ void drawBoardGame() {
 
 }
 
+void drawSwordMantle(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+
+  glTranslated(x, y, z); 
+  glRotatef(rot, x_r, y_r, z_r); 
+  glScaled(x_s, y_s, z_s);
+
+  drawMantle(0, 0, -11, 1, 1, 1);
+  drawMantle(0, 0, -10.8, .8, .8, .8);
+  drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
+  drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
+
+  glPopMatrix();
+}
+
 
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
@@ -979,35 +1048,35 @@ void display()
    cam_x = cos(f_ph) * cos(f_th);
    cam_y = sin(f_ph);
    cam_z = sin(f_th) * cos(f_ph);
-
+   //First person camera shtuff
   gluLookAt(f_x, f_y, f_z, cam_x + f_x, cam_y + f_y, cam_z + f_z , 0,1,0);
    //  Light switch
+
    if (light)
    {
       //  Translate intensity to color vectors
-      float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
-      float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
-      float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
-      //  Light direction
-      float Position[]  = {5*Cos(zh),ylight,5*Sin(zh),1};
-      //  Draw light position as ball (still no lighting here)
-      glColor3f(1,1,1);
-      ball(Position[0],Position[1],Position[2] , 0.1);
-       // OpenGL should normalize normal vectors
-      glEnable(GL_NORMALIZE);
-      //  Enable lighting
-      glEnable(GL_LIGHTING);
-      // //  glColor sets ambient and diffuse color materials
-      glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
-      glEnable(GL_COLOR_MATERIAL);
-      // //  Enable light 0
-      glEnable(GL_LIGHT0);
-      //  Set ambient, diffuse, specular components and position of light 0
-      glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-      glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-      glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-      glLightfv(GL_LIGHT0,GL_POSITION,Position);
-      glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
+   //  Set up lighting
+  glEnable(GL_LIGHTING);
+   float Ambient[]   = {0.2,0.2,0.2,1.0};
+   float Diffuse[]   = {0.8,0.8,0.8,1.0};
+   float Specular[]  = {1.0,1.0,1.0,1.0};
+   float pos[]     = {10 , 2.5, 5 , 1.0};
+   float pos2[] = {8, 2.5, -5, 1.0};
+   glEnable(GL_NORMALIZE);
+   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+   glEnable(GL_COLOR_MATERIAL);
+   glEnable(GL_LIGHT0);
+   ball(pos[0], pos[1], pos[2], .1);
+   glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
+   glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
+   glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
+   glLightfv(GL_LIGHT0,GL_POSITION,pos);
+
+   glEnable(GL_LIGHT1);
+   glLightfv(GL_LIGHT1,GL_AMBIENT , Ambient);
+   glLightfv(GL_LIGHT1,GL_DIFFUSE , Diffuse);
+   glLightfv(GL_LIGHT1,GL_SPECULAR, Specular);
+   glLightfv(GL_LIGHT1,GL_POSITION,pos2);
    }
    else
       glDisable(GL_LIGHTING);
@@ -1015,8 +1084,9 @@ void display()
    // icosahedron(.5, 0);
   drawBorders();
   // drawMantle(0, 0, 0, 1, 1, 1);
-  drawMantle(0, 0, -11, 1, 1, 1);
-  drawMantle(0, 0, -10.8, .8, .8, .8);
+  drawSwordMantle(0, 2.5, -.25, 1, 1, 1, 0, 1, 0, 90);
+
+
   displayPedistool(10, -6, 0, 1.5, 2, 1.5, 0, 0, 0, 0);
   displayPedistool(10, -6, -3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
   displayPedistool(10, -6, 3, 1.5, 1.75, 1.5, 0, 0, 0, 0);
@@ -1026,33 +1096,44 @@ void display()
   drawChairs(5.5, -4, 0, 3, 3, 3, 0 ,1 ,0, 10);
   drawChairs(0, -4, 5.5, 3, 3, 3, 0 ,1 ,0, 270);
 
-   // plane(4, 2, -6, 90);
-   icosahedron(0, -3.5, 0, .05, .05, .05);
-// double x,double y,double z, double x_r, double y_r, double z_r, double rotation, double r,double d
+  icosahedron(2, -2.65, 0, .05, .05, .05);
 
-   ringArtifact(10, 0.5, 0);
-   ringArtifact(10, -.5, 3);
-   ringArtifact(10, -.5, -3);
+  ringArtifact(10, 0.5, 0);
+  ringArtifact(10, -.5, 3);
+  ringArtifact(10, -.5, -3);
 
-   drawShelf(8, 0, 0);
-   drawShelf(-8, 0, 0);
-   drawWallChains();
+  drawShelf(8, 0, 0);
+  drawShelf(-8, 0, 0);
+  drawWallChains(0, -2, -1, 1, 1, 1, 0, 0, 0, 0);
 
-   drawTable();
-   drawDoor(0, 0, 11);
-   drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
-   drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
-   drawBoardGame();
+  drawTable();
+  drawDoor(0, 0, 11);
+  drawBoardGame();
+
+  drawTorch(10, 0, 5, 2, 2, 2, 0, 0, 0, 0);
+  drawTorch(10, 0, -5, 2, 2, 2, 0, 0, 0, 0);
+  drawTorch(-10, 0, 5, 2, 2, 2, 0, 1, 0, 180);
+  drawTorch(-10, 0, -5, 2, 2, 2, 0, 1, 0, 180);
 
 
 
-   // candle(0, 0, 0, .25, 1, .25, 0, 0, 0, 90);
-   // coin(0, 0, 0, 1, 1);
-   //  Draw axes - no lighting from here on
-   glUpdateParticles();
-   glDrawParticles();
-   glDisable(GL_LIGHTING);
-   glColor3f(1,1,1);
+
+  //Draw Torch Particles
+  glUpdateParticles(10, 2, 5, Particle1);
+  glDrawParticles(Particle1);
+
+  glUpdateParticles(10, 2, -5, Particle2);
+  glDrawParticles(Particle2);
+
+  glUpdateParticles(-10, 2, 5, Particle3);
+  glDrawParticles(Particle3);
+
+  glUpdateParticles(-10, 2, -5, Particle4);
+  glDrawParticles(Particle4);
+
+  glDisable(GL_LIGHTING);
+  glColor3f(1,1,1);
+
    if (axes)
    {
       glBegin(GL_LINES);
@@ -1225,6 +1306,7 @@ void reshape(int width,int height)
  */
 int main(int argc,char* argv[])
 {
+  srand(time(0));
   qobj = gluNewQuadric();
   gluQuadricNormals(qobj, GLU_SMOOTH);
    //  Initialize GLUT
@@ -1253,7 +1335,12 @@ int main(int argc,char* argv[])
    texture[10] = LoadTexBMP("marble.bmp");
    texture[11] = LoadTexBMP("stainglass.bmp");
    texture[12] = LoadTexBMP("boardgame.bmp");
-   glCreateParticles();
+   texture[13] = LoadTexBMP("flame.bmp");
+   texture[14] = LoadTexBMP("walltwo.bmp");
+   glCreateParticles(10, 2, 5, Particle1);
+   glCreateParticles(10, 2, -5, Particle2);
+   glCreateParticles(-10, 2, 5, Particle3);
+   glCreateParticles(-10, 2, -5, Particle4);
    ErrCheck("init");
 
    glutMainLoop();
