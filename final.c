@@ -34,7 +34,7 @@ int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
 float ylight  =   0;  // Elevation of light
-GLuint texture[17]; // Texture names
+GLuint texture[20]; // Texture names
 
 //Person positions
 double f_x = -3;
@@ -461,6 +461,7 @@ glEnd();
 glDisable(GL_TEXTURE_2D);
 glPopMatrix();
 }
+
 
 //SECTION FOR DRAWING DICE
 static void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
@@ -1030,6 +1031,148 @@ void drawSwordMantle(double x, double y, double z, double x_s, double y_s, doubl
 }
 
 
+void drawSpikes(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
+
+
+
+  glEnable(GL_TEXTURE_2D);
+
+  glBindTexture(GL_TEXTURE_2D, texture[11]);
+
+  glBegin(GL_QUADS);
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, .21);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.7, 0, .21);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 2.4, .21); 
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(0, 2.4, .21);
+  glEnd();
+
+
+  glBindTexture(GL_TEXTURE_2D, texture[15]);
+  glBegin(GL_QUADS);
+
+
+
+    //Left Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 0, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(0, 1.8, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(0, 1.8, 0);
+
+    glNormal3f(1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(.5, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(.5, 2, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, .2);
+
+    //UpperLeft Column
+    //TODO ZL CALCULATE NORMALS WITH NORMAL FUNCTION
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.3, 2.6, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 2, 0);
+
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.5, 2.1, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, 0);
+
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-.3, 2.6, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-.3, 2.6, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(.5, 2, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(.5, 2, 0);
+
+    //Middle Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.4 ,2.6, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.3, 2.6, 0);
+
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.2 ,2.1, .2);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
+
+    glNormal3f(0, 1, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.4, 2.6, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.4, 2.6, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-.3, 2.6, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-.3, 2.6, 0);
+
+    //Upper Right Column
+    //TODO ZL CALCULATE NORMALS WITH NORMAL FUNCTION
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2., 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4 ,2.6, 0);
+
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.2 ,2.1, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 1.8, .2);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
+
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 2, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 2, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.4, 2.6, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4, 2.6, 0);
+
+
+    //Right Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.7, 1.8, 0);
+
+    glNormal3f(1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.7, 0, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-1.7, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.2, 2, 0);
+
+
+    // glVertex3f()
+  glEnd();
+
+  for(double i = -.1; i >= -1.8; i -= 0.25) {
+    cylinder(i, .2, .1, .2, .001, .2, 0, 0, 0, 0, 3);
+    cylinder(i, .1, .1, .1, 2.2, .1, 0, 0, 0, 1, 3);
+    cone(i, 0, .1, .05, .1, .05, 1, 0, 0, 180, 3);
+  }
+
+  glDisable(GL_TEXTURE_2D);
+
+  glPopMatrix();
+
+
+}
+
+void drawGateBorder() {
+
+}
+
 /*
  *  OpenGL (GLUT) calls this routine to display the scene
  */
@@ -1107,13 +1250,16 @@ void display()
   drawWallChains(0, -2, -1, 1, 1, 1, 0, 0, 0, 0);
 
   drawTable();
-  drawDoor(0, 0, 11);
+  // drawDoor(0, 0, 11);
   drawBoardGame();
 
   drawTorch(10, 0, 5, 2, 2, 2, 0, 0, 0, 0);
   drawTorch(10, 0, -5, 2, 2, 2, 0, 0, 0, 0);
   drawTorch(-10, 0, 5, 2, 2, 2, 0, 1, 0, 180);
   drawTorch(-10, 0, -5, 2, 2, 2, 0, 1, 0, 180);
+
+  drawSpikes(3, -6, 11., 3.5, 4, 4, 0, 0, 0, 0);
+  // drawSpikes(0, 0, 0, 1, 1, 1, 0, 0, 0, 0);
 
 
 
@@ -1337,6 +1483,7 @@ int main(int argc,char* argv[])
    texture[12] = LoadTexBMP("boardgame.bmp");
    texture[13] = LoadTexBMP("flame.bmp");
    texture[14] = LoadTexBMP("walltwo.bmp");
+   texture[15] = LoadTexBMP("brick.bmp");
    glCreateParticles(10, 2, 5, Particle1);
    glCreateParticles(10, 2, -5, Particle2);
    glCreateParticles(-10, 2, 5, Particle3);
