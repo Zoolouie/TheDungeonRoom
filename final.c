@@ -1,8 +1,5 @@
 /*
    Created by Alexander Louie on 10/24/2019
- *  Final Homeowrk: Textures
- *
- *  Demonstrates the use of textures
  *
  *  Key bindings:
  *  l          Toggle lighting on/off
@@ -26,7 +23,6 @@ int axes=1;       //  Display axes
 int th=0;         //  Azimuth of view angle
 int ph=0;         //  Elevation of view angle
 int light=0;      //  Lighting
-int rep=1;        //  Repitition
 double asp=1;     //  Aspect ratio
 double dim=3.0;   //  Size of world
 // Light values
@@ -58,7 +54,19 @@ double f_ph = 0;
 
 GLUquadric* qobj;
 
-//Particle stuff
+
+/* SECTION 1: PARTICLE DRAWING FUNCTIONS
+----------------------------------------
+
+Here you can find the necessary functions for creating the simple fire effect.
+CreateParticles is called in the main function and will initialize all the particles
+we will need. DrawParticles puts those on the screen and UpdateParticles updates
+the position of each particle every cycle. This code was referenced from switftless.com
+but was improved both in physics calculations, color assignments and bounds by me.
+
+----------------------------------------
+*/
+
 
 int ParticleCount = 200;
 
@@ -90,6 +98,7 @@ void glCreateParticles (double x, double y, double z, PARTICLES Particle[]) {
     Particle[i].Xpos = x;
     Particle[i].Ypos = y;
     Particle[i].Zpos = z;
+    //Assign the change in x and z to be random to simulate particles
     Particle[i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * 
     rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1
     ) * rand()%11) + 1) * 0.005);
@@ -108,22 +117,6 @@ void glCreateParticles (double x, double y, double z, PARTICLES Particle[]) {
   }
 }
 
-/*
- *  Draw a ball
- *     at (x,y,z)
- *     radius r
- */
-static void ball(double x,double y,double z,double r)
-{
-   //  Save transformation
-   glPushMatrix();
-   //  Offset, scale and rotate
-   glTranslated(x,y,z);
-   glScaled(r,r,r);
-   glutSolidSphere(1.0,16,16);
-   //  Undo transofrmations
-   glPopMatrix();
-}
 
 static void glDrawParticles (PARTICLES Particle[]) {
   int i;
@@ -135,12 +128,6 @@ static void glDrawParticles (PARTICLES Particle[]) {
     glRotatef (Particle[i].Direction - 90, 0, 0, 1);
 
     glScalef (Particle[i].Scalez, Particle[i].Scalez, Particle[i].Scalez);
-
-      
-    // glBlendFunc (GL_DST_COLOR, GL_ZERO);
-    // glBindTexture (GL_TEXTURE_2D, texture[0]);
-
-    // ball(0, 0, 0, .5);
 
     glBlendFunc (GL_ONE, GL_ONE);
     glEnable(GL_TEXTURE_2D);
@@ -182,6 +169,7 @@ void glUpdateParticles (double x, double y, double z, PARTICLES Particle[]) {
     Particle[i].Direction = Particle[i].Direction + ((((((int
     )(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
 
+    //If the particles exit a certain threshhold, redraw them at the base point.
     if (Particle[i].Ypos < y - 0.1 || Particle[i].Ypos > y + 1.5 || Particle[i].Xpos > x + 0.5 || Particle[i].Xpos < x - 0.5 || Particle[i].Zpos < z - 0.5 || Particle[i].Zpos > z + 0.5)
     {
     Particle[i].Xpos = x;
@@ -205,6 +193,10 @@ void glUpdateParticles (double x, double y, double z, PARTICLES Particle[]) {
   }
 }
 
+/*CalculateNormal
+A simple function that takes in three vertices and returns the resulting
+normal vector
+*/
 
 float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
     GLfloat A[3] = {v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]};
@@ -225,6 +217,35 @@ float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
     return N;
 
 }
+
+/* SECTION 2 : GENERAL SHAPES
+
+-----------------------------
+  Here you can find rudmentary shapes, like circles cylinders and 
+  squares that will be reused later in the project to create more interesting
+  objects. 
+
+-----------------------------
+
+*/
+
+/*
+ *  Draw a ball
+ *     at (x,y,z)
+ *     radius r
+ */
+static void ball(double x,double y,double z,double r)
+{
+   //  Save transformation
+   glPushMatrix();
+   //  Offset, scale and rotate
+   glTranslated(x,y,z);
+   glScaled(r,r,r);
+   glutSolidSphere(1.0,16,16);
+   //  Undo transofrmations
+   glPopMatrix();
+}
+
 
 static void flatTop(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, 
   double r,double d, int tex)
@@ -302,28 +323,24 @@ static void cube(double x,double y,double z,
    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1,+1,-1);
    glTexCoord2f(0.0f, 1.0f); glVertex3f(+1,+1,-1);
    //  Right
-   glTexCoord2d(1, 1);
    glNormal3f( 1, 0, 0);
    glTexCoord2f(0.0f, 0.0f); glVertex3f(+1,-1,+1);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,-1,-1);
    glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,+1,-1);
    glTexCoord2f(0.0f, 1.0f); glVertex3f(+1,+1,+1);
    //  Left
-   glTexCoord2d(1, 1);
    glNormal3f( -1, 0, 0);
    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,-1,-1);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1,-1,+1);
    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1,+1,+1);
    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,+1,-1);
    //  Top
-   glTexCoord2d(1, 1);
    glNormal3f( 0, 0, 1);
    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,+1,+1);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,+1,+1);
    glTexCoord2f(1.0f, 1.0f); glVertex3f(+1,+1,-1);
    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1,+1,-1);
    //  Bottom
-   glTexCoord2d(1, 1);
    glNormal3f( 0, 0, -1);
    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1,-1,-1);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(+1,-1,-1);
@@ -336,6 +353,7 @@ static void cube(double x,double y,double z,
    glDisable(GL_TEXTURE_2D);
 }
 
+//Code Referenced from StackOverflow
 static void drawTorus(double r, double c,
                int rSeg, int cSeg, double x_t, double y_t, double z_t,
                double x_r, double y_r, double z_r, double rotate)
@@ -440,69 +458,68 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 
 
 static void plane(float width, float height, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex, float repeat) {
-   glPushMatrix();
-   glEnable(GL_TEXTURE_2D);
+  glPushMatrix();
+  glEnable(GL_TEXTURE_2D);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glBindTexture(GL_TEXTURE_2D, texture[tex]);
-   glColor3f(1,1 ,1);
-   glRotatef(rotate, x_r, y_r, z_r);
-   glTranslated(x_t, y_t, z_t);
-   glBegin(GL_QUADS);
+  glBindTexture(GL_TEXTURE_2D, texture[tex]);
+  glColor3f(1,1 ,1);
+  glRotatef(rotate, x_r, y_r, z_r);
+  glTranslated(x_t, y_t, z_t);
+  glBegin(GL_QUADS);
 
-   glNormal3f(0, 1, 0);
+  glNormal3f(0, 1, 0);
 
-   glTexCoord2f(0.0f, 0.0f);
-   glVertex3f(-1.0 * width, 0, height);
+  glTexCoord2f(0.0f, 0.0f);
+  glVertex3f(-1.0 * width, 0, height);
 
-   glTexCoord2f(repeat, 0.0f);
-   glVertex3f( width, 0, height);
+  glTexCoord2f(repeat, 0.0f);
+  glVertex3f( width, 0, height);
 
-   glTexCoord2f(repeat, repeat);  
-   glVertex3f( width, 0, -1.0 * height);
+  glTexCoord2f(repeat, repeat);  
+  glVertex3f( width, 0, -1.0 * height);
 
-   glTexCoord2f(0.0f, repeat);
-   glVertex3f(-1.0 * width, 0, -1.0 * height);
+  glTexCoord2f(0.0f, repeat);
+  glVertex3f(-1.0 * width, 0, -1.0 * height);
 
 
-glEnd();
-glDisable(GL_TEXTURE_2D);
-glPopMatrix();
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  glPopMatrix();
 }
 
 
-//SECTION FOR DRAWING DICE
 static void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
-   glPushMatrix();
-   glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D,texture[7]);
-   glTranslated(x,y,z);
-   glScaled(x_s, y_s, z_s);
-   double X = 1;
-   double Z = 1.618; // Golden ratio for platonic solid
+  glPushMatrix();
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D,texture[7]);
+  glTranslated(x,y,z);
+  glScaled(x_s, y_s, z_s);
+  double X = 1;
+  double Z = 1.618; // Golden ratio for platonic solid
 
-   //
-   GLfloat vdata[12][3] = {    
-   {-X, 0, Z}, {X, 0, Z}, {-X, 0, -Z}, {X, 0, -Z},    
-   {0, Z, X}, {0, Z, -X}, {0, -Z, X}, {0, -Z, -X},    
-   {Z, X, 0}, {-Z, X, 0}, {Z, -X, 0}, {-Z, -X, 0} 
-   };
+  //
+  GLfloat vdata[12][3] = {    
+  {-X, 0, Z}, {X, 0, Z}, {-X, 0, -Z}, {X, 0, -Z},    
+  {0, Z, X}, {0, Z, -X}, {0, -Z, X}, {0, -Z, -X},    
+  {Z, X, 0}, {-Z, X, 0}, {Z, -X, 0}, {-Z, -X, 0} 
+  };
 
-   for(int i = 0; i < 12; i ++) {
-      for (int j = 0; j < 3; j ++) {
-         vdata[i][j] = vdata[i][j];
-      }
-   }
+  for(int i = 0; i < 12; i ++) {
+    for (int j = 0; j < 3; j ++) {
+       vdata[i][j] = vdata[i][j];
+    }
+  }
 
-   GLuint tindices[20][3] = { 
-   {0,4,1}, {0,9,4}, {9,5,4}, {4,5,8}, {4,8,1},    
-   {8,10,1}, {8,3,10}, {5,3,8}, {5,2,3}, {2,7,3},    
-   {7,10,3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1,6}, 
-   {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11} };
+  GLuint tindices[20][3] = { 
+  {0,4,1}, {0,9,4}, {9,5,4}, {4,5,8}, {4,8,1},    
+  {8,10,1}, {8,3,10}, {5,3,8}, {5,2,3}, {2,7,3},    
+  {7,10,3}, {7,6,10}, {7,11,6}, {11,0,6}, {0,1,6}, 
+  {6,1,10}, {9,0,11}, {9,11,2}, {9,2,5}, {7,2,11} };
 
-int i;
+  int i;
 
-glBegin(GL_TRIANGLES);    
-for (i = 0; i < 20; i++) {   
+  glBegin(GL_TRIANGLES);    
+  for (i = 0; i < 20; i++) {   
 
       GLfloat v1[3];
       GLfloat v2[3];
@@ -525,14 +542,13 @@ for (i = 0; i < 20; i++) {
 
       glTexCoord2f(0.5, 1); 
       glVertex3fv(&vdata[tindices[i][0]][0]); 
-}
-glEnd();
+  }
+  glEnd();
 
    glDisable(GL_TEXTURE_2D);
    glPopMatrix();
 }
 
-// TODO ZL Reimplement with candle
 static void cone(double x, double y, double z, double x_s, double y_s, double z_s, 
   double x_t, double y_t, double z_t, double rotation, int tex) {
   glPushMatrix();
@@ -561,37 +577,17 @@ static void cone(double x, double y, double z, double x_s, double y_s, double z_
   glPopMatrix();
 }
 
-// TODO ZL Talk to a TA about proper lighting implementation
-// static void candle(double x, double y, double z, double x_s, double y_s, double z_s,
-//   double x_t, double y_t, double z_t, double rotation) {
-//   glPushMatrix();
-//   glTranslated(x, y, z);
-//   glScaled(x_s, y_s, z_s);
-//   glRotatef(rotation, x_t, y_t, z_t);
-//   cone(0, 0, 0, .5, .5, .5, -1, 0, 0, 90, 8);
-//   cylinder(0, -1, 0, 1, 1, 1, 0, 0, 0, 0, 8);
-//   glPopMatrix();
+/* SECTION 3 - General Room Furnature
+------------------------------------
+This is where all of the basic room furnature will be drawn. 
+This includes chairs, tables, and other things like that.
 
-//   float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
-//   float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
-//   float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
-//   //  Light direction
-//   float Position[]  = {x, y + 1, z, 1};
-//   //  Draw light position as ball (still no lighting here)
-//   glColor3f(1,1,1);
-//   ball(Position[0],Position[1],Position[2] , 0.1);
-//   //  glColor sets ambient and diffuse color materials
-//   //  Enable light 0
-//   glEnable(GL_LIGHT0);
-//   //  Set ambient, diffuse, specular components and position of light 0
-//   glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-//   glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-//   glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-//   glLightfv(GL_LIGHT0,GL_POSITION,Position);
-//   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32.0f);
 
-// }
 
+
+------------------------------------
+
+*/
 void drawChairs(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
   glPushMatrix();
   glTranslated(x, y, z);
@@ -614,27 +610,6 @@ void drawChairs(double x, double y, double z, double x_s, double y_s, double z_s
 
   glPopMatrix();
 
-
-
-}
-
-void drawWallChains(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
-  glPushMatrix();
-  glTranslated(x, y, z);
-  glScaled(x_s, y_s, z_s);
-  glRotatef(rot, x_r, y_r, z_r);
-
-  drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 3.0, 3, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 2.0, 2, 0, 1, 0, 90);
-
-  drawTorus(.10, .30, 20, 8, -12, 5, -3, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 4.0, -2, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
-  drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
-
-  glPopMatrix();
 }
 
 void drawBorders() {
@@ -670,6 +645,51 @@ void drawShelf(double x, double y, double z) {
 
 }
 
+void drawTable() {
+  glPushMatrix();
+
+  cube(2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(-2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(-2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+  cube(2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
+
+  flatTop(0, -3, 0, 1, 0, 0, 90, 5, 0.2, 6);
+
+
+  glPopMatrix();
+
+}
+
+/* SECTION 4 - Decorations
+------------------------------------
+This is where all the functions for neat things placed around the 
+room will be kept. This includes torches, gates and other 
+neat things like that.
+
+------------------------------------
+
+*/
+
+
+void drawWallChains(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
+
+  drawTorus(.10, .30, 20, 8, -12, 5, 5, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 4.0, 4, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 3.0, 3, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 2.0, 2, 0, 1, 0, 90);
+
+  drawTorus(.10, .30, 20, 8, -12, 5, -3, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 4.0, -2, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 3.0, -1, 0, 1, 0, 90);
+  drawTorus(.10, .30, 20, 8, -12, 2.0, 0, 0, 1, 0, 90);
+
+  glPopMatrix();
+}
+
 void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s) {
   glPushMatrix();
   glTranslated(x, y, z);
@@ -680,11 +700,17 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
   glBegin(GL_TRIANGLE_STRIP);
     glNormal3f(0, 0, 1);
+    glTexCoord2f(0, .5);
     glVertex3f(2.0, 0, 0);
+    glTexCoord2f(.3, 0);
     glVertex3f(0.8, 1.0, 0);
-    glVertex3f(0.8, -1.0, 0);  
+    glTexCoord2f(.3, 1);
+    glVertex3f(0.8, -1.0, 0);
+    glTexCoord2f(.6, 0);  
     glVertex3f(-0.8, 1.0, 0);
+    glTexCoord2f(.6, 1);
     glVertex3f(-0.8,-1.0, 0);
+    glTexCoord2d(1, .5);
     glVertex3f(-2.0, 0.0, 0);
   glEnd();
 
@@ -702,102 +728,66 @@ void drawMantle(double x, double y, double z, double x_s, double y_s, double z_s
 
   //top
   glNormal3f(0, 1, 0);
-  glVertex3f(0.8, 1.0, -.5);
-  glVertex3f(-0.8, 1.0, -.5);
-  glVertex3f(-0.8, 1.0, 0);
-  glVertex3f(0.8, 1.0, 0);
+  glTexCoord2f(0, 0); glVertex3f(0.8, 1.0, -.5);
+  glTexCoord2f(0, 1); glVertex3f(-0.8, 1.0, -.5);
+  glTexCoord2f(1, 0); glVertex3f(-0.8, 1.0, 0);
+  glTexCoord2f(1, 1); glVertex3f(0.8, 1.0, 0);
 
   //bottom
   glNormal3f(0, -1, 0);
-  glVertex3f(-0.8, -1.0, -.5);
-  glVertex3f(0.8, -1.0, -.5);
-  glVertex3f(0.8, -1.0, 0);
-  glVertex3f(-0.8, -1.0, 0);
+  glTexCoord2f(0, 0); glVertex3f(-0.8, -1.0, -.5);
+  glTexCoord2f(0, 1); glVertex3f(0.8, -1.0, -.5);
+  glTexCoord2f(1, 0); glVertex3f(0.8, -1.0, 0);
+  glTexCoord2f(1, 1); glVertex3f(-0.8, -1.0, 0);
 
 
   //upperleft
-  glNormal3f(1, 1, 0);
-  glVertex3f(2.0, 0, -0.5);
-  glVertex3f(0.8, 1.0, -0.5);
-  glVertex3f(0.8, 1.0, 0);
-  glVertex3f(2.0, 0, 0);
+  //Because the quad has the same orientation as a triangle in the same place,
+  //we can generalize it to a triangle and call the normal function with 
+  //three of its vertices
+  GLfloat N[3];
+  float v1[3] = {2, 0, -.5};
+  float v2[3] = {0.8, 1.0, -.5};
+  float v3[3] = {0.8, 1.0, 0};
+  calculateNormal(v1, v2, v3, N);
+  glNormal3f(-N[0], -N[1], -N[2]);
+  glTexCoord2f(0, 0); glVertex3f(2.0, 0, -0.5);
+  glTexCoord2f(0, 1); glVertex3f(0.8, 1.0, -0.5);
+  glTexCoord2f(1, 0); glVertex3f(0.8, 1.0, 0);
+  glTexCoord2f(1, 1); glVertex3f(2.0, 0, 0);
 
 
   //lowerleft
-  glNormal3f(1, -1, 0);
-  glVertex3f(0.8, -1.0, -0.5);
-  glVertex3f(2.0, 0, -0.5);
-  glVertex3f(2.0, 0, 0);
-  glVertex3f(0.8, -1.0, 0);
+  GLfloat N2[3];
+  float ver1[3] = {0.8, -1.0, -.5};
+  float ver2[3] = {2.0, 0, -0.5};
+  float ver3[3] = {2.0, 0, 0};
+  calculateNormal(ver1, ver2, ver3, N2);
+  glNormal3f(-N2[0], -N2[1], -N2[2]);
+  glTexCoord2f(0, 0); glVertex3f(0.8, -1.0, -0.5);
+  glTexCoord2f(0, 1); glVertex3f(2.0, 0, -0.5);
+  glTexCoord2f(1, 0); glVertex3f(2.0, 0, 0);
+  glTexCoord2f(1, 1); glVertex3f(0.8, -1.0, 0);
 
 
   //upperright
-  glNormal3f(-1, 1, 0);
-  glVertex3f(-0.8, 1.0, -0.5);
-  glVertex3f(-2.0, 0, -0.5);
-  glVertex3f(-2.0, 0, 0);
-  glVertex3f(-0.8, 1.0, 0);
+  glNormal3f(N2[0], N2[1], N2[2]);
+  glTexCoord2f(0, 0); glVertex3f(-0.8, 1.0, -0.5);
+  glTexCoord2f(0, 1); glVertex3f(-2.0, 0, -0.5);
+  glTexCoord2f(1, 0); glVertex3f(-2.0, 0, 0);
+  glTexCoord2f(1, 1); glVertex3f(-0.8, 1.0, 0);
 
 
   //lowerright
-  glNormal3f(-1, -1, 0);
-  glVertex3f(-2.0, 0, -0.5);
-  glVertex3f(-0.8, -1.0, -0.5);
-  glVertex3f(-0.8, -1.0, 0);
-  glVertex3f(-2.0, 0, 0);
+  //Given that these are facing opposite directions, the normal should
+  //also just be the opposite of the upperleft.
+  glNormal3f(N[0], N[1], N[2]);
+  glTexCoord2f(0, 0); glVertex3f(-2.0, 0, -0.5);
+  glTexCoord2f(0, 1); glVertex3f(-0.8, -1.0, -0.5);
+  glTexCoord2f(1, 0); glVertex3f(-0.8, -1.0, 0);
+  glTexCoord2f(1, 1); glVertex3f(-2.0, 0, 0);
 
   glEnd();
-  glPopMatrix();
-
-}
-
-
-void ringArtifact(double x, double y, double z) {
-  glPushMatrix();
-  glTranslated(x, y, z);
-  ball(0, 0, 0, .1);
-  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 1, 0, zh);
-  drawTorus(.01, .30, 20, 10, 0, 0, 0, 0, 1, 1, zh);
-  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 0, 1, zh);
-
-  glPopMatrix();
-}
-
-void drawDoor(double x, double y, double z) {
-
-  glPushMatrix();
-  glTranslated(x, y, z);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, texture[6]);
-
-//TODO Ask TA about how to correctly implement this
-  // glBegin(GL_TRIANGLE_FAN);
-  //     double radius = 2;
-  //     glTexCoord2f( 0.5, 0.5 );
-  //     glVertex3f(0, 2, 0);  /* center */
-  //     for (double i = 3.1415; i >= 0; i -= 3.1415 / 50)
-  //     {
-  //         glNormal3f(0,0,-1);
-  //         glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
-  //         // glVertex3f(0, .5 * cos(i), .5 * sin(i));
-  //         glVertex3f(radius * cos(i),radius * sin(i) + 2, 0);
-  //     }
-  // glEnd();
-
-  glBegin(GL_QUADS);
-
-  glNormal3f(0, 0, -1);
-
-  glTexCoord2f(0.0f, 0.0f); glVertex3f(2, -2, 0);
-  glTexCoord2f(1.0f, 0.0f); glVertex3f(-2, -2, 0);
-  glTexCoord2f(1.0f, 1.0f); glVertex3f(-2, 2, 0);
-  glTexCoord2f(0.0f, 1.0f); glVertex3f(2, 2, 0);
-
-
-  glEnd();
-
-  glDisable(GL_TEXTURE_2D);
-
   glPopMatrix();
 
 }
@@ -887,20 +877,7 @@ void drawSword(float x, float y, float z, float x_s, float y_s, float z_s, float
 
 }
 
-void drawTable() {
-  glPushMatrix();
 
-  cube(2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
-  cube(-2.5, -4.5, 2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
-  cube(-2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
-  cube(2.5, -4.5, -2.5, .3, 1.5, .3, 0, 0, 0, 0, 6);
-
-  flatTop(0, -3, 0, 1, 0, 0, 90, 5, 0.2, 6);
-
-
-  glPopMatrix();
-
-}
 
 void drawTorchClaw(double x, double y, double z, double x_r, double y_r, double z_r, double rot) {
   glPushMatrix();
@@ -940,12 +917,202 @@ void drawTorch(double x, double y, double z, double x_s, double y_s, double z_s,
   glPopMatrix(); 
 }
 
+void drawSwordMantle(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+
+  glTranslated(x, y, z); 
+  glRotatef(rot, x_r, y_r, z_r); 
+  glScaled(x_s, y_s, z_s);
+
+  drawMantle(0, 0, -11, 1, 1, 1);
+  drawMantle(0, 0, -10.8, .8, .8, .8);
+  drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
+  drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
+
+  glPopMatrix();
+}
+
+
+void drawGate(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+  glPushMatrix();
+
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
+
+
+
+  glEnable(GL_TEXTURE_2D);
+
+  glBindTexture(GL_TEXTURE_2D, texture[19]);
+
+  glBegin(GL_QUADS);
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, .21);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.7, 0, .21);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 2.3, .21); 
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(0, 2.3, .21);
+  glEnd();
+
+
+  glBindTexture(GL_TEXTURE_2D, texture[15]);
+  glBegin(GL_QUADS);
+
+
+
+    //Left Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 0, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(0, 1.8, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(0, 1.8, 0);
+
+    glNormal3f(1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(.5, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(.5, 2, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, .2);
+
+    //UpperLeft Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.3, 2.6, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 2, 0);
+
+    GLfloat N[3];
+    float v1[3] = {0, 1.8, 0};
+    float v2[3] = {-.5, 2.1, .2};
+    float v3[3] = {-.5, 2.1, 0};
+    calculateNormal(v1, v2, v3, N);
+    glNormal3f(-N[0], -N[1], -N[2]);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.5, 2.1, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, 0);
+
+    GLfloat N2[3];
+    float ve1[3] = {-.3, 2.6, 0};
+    float ve2[3] = {-.3, 2.6, .2};
+    float ve3[3] = {.5, 2, .2};
+    calculateNormal(ve1, ve2, ve3, N2);
+    glNormal3f(-N2[0], -N2[1], -N2[2]);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-.3, 2.6, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-.3, 2.6, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(.5, 2, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(.5, 2, 0);
+
+    //Middle Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.4 ,2.6, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.3, 2.6, 0);
+
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.2 ,2.1, .2);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
+
+    glNormal3f(0, 1, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.4, 2.6, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.4, 2.6, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-.3, 2.6, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-.3, 2.6, 0);
+
+    //Upper Right Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2., 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4 ,2.6, 0);
+
+    glNormal3f(N[0],- N[1],- N[2]);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.2 ,2.1, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 1.8, .2);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
+
+    glNormal3f(N2[0], -N2[1], -N2[2]);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 2, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 2, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.4, 2.6, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4, 2.6, 0);
+
+
+    //Right Column
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, 0);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, 0);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.7, 1.8, 0);
+
+    glNormal3f(1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 1.8, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, .2);
+    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.7, 0, .2);
+    glTexCoord2f(1.0f, 0.0f);glVertex3f(-1.7, 0, 0);
+
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 0, 0);
+    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, .2);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, .2);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.2, 2, 0);
+
+
+    // glVertex3f()
+  glEnd();
+
+  for(double i = -.1; i >= -1.8; i -= 0.25) {
+    cylinder(i, .2, .1, .2, .001, .2, 0, 0, 0, 0, 3);
+    cylinder(i, .1, .1, .1, 2.2, .1, 0, 0, 0, 1, 3);
+    cone(i, 0, .1, .05, .1, .05, 1, 0, 0, 180, 3);
+  }
+
+  glDisable(GL_TEXTURE_2D);
+
+  glPopMatrix();
+
+
+}
+
+/* SECTION 5 - Artifacts and Other Decorations
+------------------------------------
+This is where all the functions of the finishing touch objects
+will go. These are made to give the room a little bit 
+more razzle-dazzle.
+
+------------------------------------
+
+*/
+
+
+void ringArtifact(double x, double y, double z) {
+  glPushMatrix();
+  glTranslated(x, y, z);
+  ball(0, 0, 0, .1);
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 1, 0, zh);
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 0, 1, 1, zh);
+  drawTorus(.01, .30, 20, 10, 0, 0, 0, 1, 0, 1, zh);
+
+  glPopMatrix();
+}
+
+
 void drawGamePeices(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot, int mode) {
     glPushMatrix();
     glTranslated(x, y, z);
     glScaled(x_s, y_s, z_s);
     glRotatef(rot, x_r, y_r, z_r);
     glEnable(GL_TEXTURE_2D);
+    //The peices should be one of four colors
     switch (mode){
       case 0 :
         glColor3f(0, 0, 1);
@@ -1022,159 +1189,6 @@ void drawBoardGame() {
 
 }
 
-void drawSwordMantle(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
-  glPushMatrix();
-
-  glTranslated(x, y, z); 
-  glRotatef(rot, x_r, y_r, z_r); 
-  glScaled(x_s, y_s, z_s);
-
-  drawMantle(0, 0, -11, 1, 1, 1);
-  drawMantle(0, 0, -10.8, .8, .8, .8);
-  drawSword(.8, .4, -10.7, 1, 1, 1, 0, 0, 1, 35);
-  drawSword(-.7, .4, -10.7, 1, 1, 1, 0, 0, 1, 145);
-
-  glPopMatrix();
-}
-
-
-void drawSpikes(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
-  glPushMatrix();
-
-  glTranslated(x, y, z);
-  glScaled(x_s, y_s, z_s);
-  glRotatef(rot, x_r, y_r, z_r);
-
-
-
-  glEnable(GL_TEXTURE_2D);
-
-  glBindTexture(GL_TEXTURE_2D, texture[11]);
-
-  glBegin(GL_QUADS);
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, .21);
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.7, 0, .21);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 2.4, .21); 
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(0, 2.4, .21);
-  glEnd();
-
-
-  glBindTexture(GL_TEXTURE_2D, texture[15]);
-  glBegin(GL_QUADS);
-
-
-
-    //Left Column
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, 0);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, 0);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, 0);
-
-    glNormal3f(-1, 0, 0);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 0, .2);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(0, 1.8, .2);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(0, 1.8, 0);
-
-    glNormal3f(1, 0, 0);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(.5, 0, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(.5, 2, 0);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(.5, 2, .2);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 0, .2);
-
-    //UpperLeft Column
-    //TODO ZL CALCULATE NORMALS WITH NORMAL FUNCTION
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-0.5, 2.1, 0);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.3, 2.6, 0);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(.5, 2, 0);
-
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(0, 1.8, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(0, 1.8, .2);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(-0.5, 2.1, .2);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, 0);
-
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-.3, 2.6, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-.3, 2.6, .2);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(.5, 2, .2);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(.5, 2, 0);
-
-    //Middle Column
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.4 ,2.6, 0);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.3, 2.6, 0);
-
-    glNormal3f(0, -1, 0);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, 2.1, 0);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(-0.5, 2.1, .2);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.2 ,2.1, .2);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.2, 2.1, 0);
-
-    glNormal3f(0, 1, 0);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.4, 2.6, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.4, 2.6, .2);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-.3, 2.6, .2);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-.3, 2.6, 0);
-
-    //Upper Right Column
-    //TODO ZL CALCULATE NORMALS WITH NORMAL FUNCTION
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2., 0);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4 ,2.6, 0);
-
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.2, 2.1, 0);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.2 ,2.1, .2);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.7, 1.8, .2);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, 0);
-
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 2, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 2, .2);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.4, 2.6, .2);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.4, 2.6, 0);
-
-
-    //Right Column
-    glNormal3f(0, 0, -1);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 0, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, 0);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, 0);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.7, 1.8, 0);
-
-    glNormal3f(1, 0, 0);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-1.7, 1.8, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-1.7, 1.8, .2);
-    glTexCoord2f(1.0f, 1.0f);glVertex3f(-1.7, 0, .2);
-    glTexCoord2f(1.0f, 0.0f);glVertex3f(-1.7, 0, 0);
-
-    glNormal3f(-1, 0, 0);
-    glTexCoord2f(0.0f, 0.0f);glVertex3f(-2.2, 0, 0);
-    glTexCoord2f(0.0f, 1.0f);glVertex3f(-2.2, 0, .2);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.2, 2, .2);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.2, 2, 0);
-
-
-    // glVertex3f()
-  glEnd();
-
-  for(double i = -.1; i >= -1.8; i -= 0.25) {
-    cylinder(i, .2, .1, .2, .001, .2, 0, 0, 0, 0, 3);
-    cylinder(i, .1, .1, .1, 2.2, .1, 0, 0, 0, 1, 3);
-    cone(i, 0, .1, .05, .1, .05, 1, 0, 0, 180, 3);
-  }
-
-  glDisable(GL_TEXTURE_2D);
-
-  glPopMatrix();
-
-
-}
 
 void drawCubeArtifact(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
 
@@ -1187,7 +1201,6 @@ void drawCubeArtifact(double x, double y, double z, double x_s, double y_s, doub
   double osci = fabs(sin(ch * .1)) * 0.1;
   int tex = 10;
   // //Left sidea
-  // cube (.21+ osci, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, 1);
   cube(.21 + osci, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
   cube(.21 + osci, -.21- osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
   cube(.21 + osci, .21+ osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
@@ -1230,20 +1243,122 @@ void drawCubeArtifact(double x, double y, double z, double x_s, double y_s, doub
 
 }
 
+/* SECTION 6 - Shader Code
+------------------------------------
+This is where all the necessary functions to 
+create a shader go. These functions are taken 
+from the shaders example from class.
 
-void drawBarrel() {
-  glBegin(GL_TRIANGLE_FAN);
-  glTexCoord2f( 0.5, 0.5 );
-  glVertex3f(0, 0, 0);  
-  for (double i = 0; i <= 2 * 3.1415; i += .1)
-  {
-      glNormal3f(0,0,-1);
-      glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
-      glVertex3f(2 * cos(i), 0, 2 * sin(i));
-  }
 
-  glEnd();
 
+------------------------------------
+*/
+
+/*
+ *  Print Shader Log
+ */
+void PrintShaderLog(int obj,char* file)
+{
+   int len=0;
+   glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&len);
+   if (len>1)
+   {
+      int n=0;
+      char* buffer = (char *)malloc(len);
+      if (!buffer) Fatal("Cannot allocate %d bytes of text for shader log\n",len);
+      glGetShaderInfoLog(obj,len,&n,buffer);
+      fprintf(stderr,"%s:\n%s\n",file,buffer);
+      free(buffer);
+   }
+   glGetShaderiv(obj,GL_COMPILE_STATUS,&len);
+   if (!len) Fatal("Error compiling %s\n",file);
+}
+//Shader stuff
+
+ 
+char* ReadText(char *file)
+{
+   int   n;
+   char* buffer;
+   //  Open file
+   FILE* f = fopen(file,"rt");
+   if (!f) Fatal("Cannot open text file %s\n",file);
+   //  Seek to end to determine size, then rewind
+   fseek(f,0,SEEK_END);
+   n = ftell(f);
+   rewind(f);
+   //  Allocate memory for the whole file
+   buffer = (char*)malloc(n+1);
+   if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
+   //  Snarf the file
+   if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
+   buffer[n] = 0;
+   //  Close and return
+   fclose(f);
+   return buffer;
+}
+
+
+/*
+ *  Print Program Log
+ */
+void PrintProgramLog(int obj)
+{
+   int len=0;
+   glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&len);
+   if (len>1)
+   {
+      int n=0;
+      char* buffer = (char *)malloc(len);
+      if (!buffer) Fatal("Cannot allocate %d bytes of text for program log\n",len);
+      glGetProgramInfoLog(obj,len,&n,buffer);
+      fprintf(stderr,"%s\n",buffer);
+   }
+   glGetProgramiv(obj,GL_LINK_STATUS,&len);
+   if (!len) Fatal("Error linking program\n");
+}
+
+/*
+ *  Create Shader
+ */
+int CreateShader(GLenum type,char* file)
+{
+   //  Create the shader
+   int shader = glCreateShader(type);
+   //  Load source code from file
+   char* source = ReadText(file);
+   glShaderSource(shader,1,(const char**)&source,NULL);
+   free(source);
+   //  Compile the shader
+   fprintf(stderr,"Compile %s\n",file);
+   glCompileShader(shader);
+   //  Check for errors
+   PrintShaderLog(shader,file);
+   //  Return name
+   return shader;
+}
+
+/*
+ *  Create Shader Program
+ */
+int CreateShaderProg(char* VertFile,char* FragFile)
+{
+   //  Create program
+   int prog = glCreateProgram();
+   //  Create and compile vertex shader
+   int vert = CreateShader(GL_VERTEX_SHADER  ,VertFile);
+   //  Create and compile fragment shader
+   int frag = CreateShader(GL_FRAGMENT_SHADER,FragFile);
+   //  Attach vertex shader
+   glAttachShader(prog,vert);
+   //  Attach fragment shader
+   glAttachShader(prog,frag);
+   //  Link program
+   glLinkProgram(prog);
+   //  Check for errors
+   PrintProgramLog(prog);
+   //  Return name
+   return prog;
 }
 
 /*
@@ -1286,7 +1401,7 @@ void display()
   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
 
-  //Draw Torch Particles
+  //Handler for drawing torches/ regular light
   glUseProgram(shader[1]);
   if (torch1) {
        glEnable(GL_LIGHT0);
@@ -1356,13 +1471,15 @@ void display()
       glLightfv(GL_LIGHT2,GL_DIFFUSE ,Diff);
       glLightfv(GL_LIGHT2,GL_SPECULAR,Spec);
       glLightfv(GL_LIGHT2,GL_POSITION,Pos);
+  } else {
+    glDisable(GL_LIGHT2);
   }
 
 
   glUseProgram(shader[0]);
-   // icosahedron(.5, 0);
+
+  //Draw all the objects to the scene
   drawBorders();
-  // drawMantle(0, 0, 0, 1, 1, 1);
   drawSwordMantle(-.5, 2.5, 0, 1, 1, 1, 0, 1, 0, 90);
 
 
@@ -1389,7 +1506,6 @@ void display()
   drawWallChains(0, -2, -1, 1, 1, 1, 0, 0, 0, 0);
 
   drawTable();
-  // drawDoor(0, 0, 11);
   drawBoardGame();
 
 
@@ -1398,13 +1514,13 @@ void display()
   drawTorch(-11.3, 0, 5, 2, 2, 2, 0, 1, 0, 180);
   drawTorch(-11.3, 0, -5, 2, 2, 2, 0, 1, 0, 180);
 
-  drawSpikes(3, -6, 11., 3.5, 4, 4, 0, 0, 0, 0);
+  drawGate(3, -6, 11., 3.5, 4, 4, 0, 0, 0, 0);
 
 
   glDisable(GL_LIGHTING);
   glColor3f(1,1,1);
 
-
+  //Draw axes 
    if (axes)
    {
       glBegin(GL_LINES);
@@ -1423,15 +1539,8 @@ void display()
       glRasterPos3d(0.0,0.0,len);
       Print("Z");
    }
-   //  Display parameters
+
    glWindowPos2i(5,5);
-   // Print("Angle=%d,%d  Dim=%.1f Light=%s Texture=%s",th,ph,dim,light?"On":"Off",mode?"Replace":"Modulate");
-   // if (light)
-   // {
-   //    glWindowPos2i(5,25);
-   //    Print("Ambient=%d  Diffuse=%d Specular=%d Emission=%d Shininess=%.0f",ambient,diffuse,specular,emission,shiny);
-   // }
-   //  Render the scene and make it visible
    ErrCheck("display");
    glFlush();
    glutSwapBuffers();
@@ -1516,9 +1625,9 @@ void key(unsigned char ch,int x,int y)
     ntex = 1-ntex;
   //  Repitition
   else if (ch=='+')
-    rep++;
-  else if (ch=='-' && rep>1)
-    rep--;
+    ylight+= 0.1;
+  else if (ch=='-' )
+    ylight-= 0.1;
 
   // Calculate change in x, y, and z then add to respective positions
   // Moves forwards in first person
@@ -1582,111 +1691,6 @@ void reshape(int width,int height)
    Project(45,asp,dim);
 }
 
-/*
- *  Print Shader Log
- */
-void PrintShaderLog(int obj,char* file)
-{
-   int len=0;
-   glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&len);
-   if (len>1)
-   {
-      int n=0;
-      char* buffer = (char *)malloc(len);
-      if (!buffer) Fatal("Cannot allocate %d bytes of text for shader log\n",len);
-      glGetShaderInfoLog(obj,len,&n,buffer);
-      fprintf(stderr,"%s:\n%s\n",file,buffer);
-      free(buffer);
-   }
-   glGetShaderiv(obj,GL_COMPILE_STATUS,&len);
-   if (!len) Fatal("Error compiling %s\n",file);
-}
-//Shader stuff
-
- 
-char* ReadText(char *file)
-{
-   int   n;
-   char* buffer;
-   //  Open file
-   FILE* f = fopen(file,"rt");
-   if (!f) Fatal("Cannot open text file %s\n",file);
-   //  Seek to end to determine size, then rewind
-   fseek(f,0,SEEK_END);
-   n = ftell(f);
-   rewind(f);
-   //  Allocate memory for the whole file
-   buffer = (char*)malloc(n+1);
-   if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
-   //  Snarf the file
-   if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
-   buffer[n] = 0;
-   //  Close and return
-   fclose(f);
-   return buffer;
-}
-
-/*
- *  Print Program Log
- */
-void PrintProgramLog(int obj)
-{
-   int len=0;
-   glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&len);
-   if (len>1)
-   {
-      int n=0;
-      char* buffer = (char *)malloc(len);
-      if (!buffer) Fatal("Cannot allocate %d bytes of text for program log\n",len);
-      glGetProgramInfoLog(obj,len,&n,buffer);
-      fprintf(stderr,"%s\n",buffer);
-   }
-   glGetProgramiv(obj,GL_LINK_STATUS,&len);
-   if (!len) Fatal("Error linking program\n");
-}
-
-/*
- *  Create Shader
- */
-int CreateShader(GLenum type,char* file)
-{
-   //  Create the shader
-   int shader = glCreateShader(type);
-   //  Load source code from file
-   char* source = ReadText(file);
-   glShaderSource(shader,1,(const char**)&source,NULL);
-   free(source);
-   //  Compile the shader
-   fprintf(stderr,"Compile %s\n",file);
-   glCompileShader(shader);
-   //  Check for errors
-   PrintShaderLog(shader,file);
-   //  Return name
-   return shader;
-}
-
-/*
- *  Create Shader Program
- */
-int CreateShaderProg(char* VertFile,char* FragFile)
-{
-   //  Create program
-   int prog = glCreateProgram();
-   //  Create and compile vertex shader
-   int vert = CreateShader(GL_VERTEX_SHADER  ,VertFile);
-   //  Create and compile fragment shader
-   int frag = CreateShader(GL_FRAGMENT_SHADER,FragFile);
-   //  Attach vertex shader
-   glAttachShader(prog,vert);
-   //  Attach fragment shader
-   glAttachShader(prog,frag);
-   //  Link program
-   glLinkProgram(prog);
-   //  Check for errors
-   PrintProgramLog(prog);
-   //  Return name
-   return prog;
-}
 
 /*
  *  Start up GLUT and tell it what to do
@@ -1733,11 +1737,15 @@ int main(int argc,char* argv[])
    texture[16] = LoadTexBMP("mystic.bmp");
    texture[17] = LoadTexBMP("pcrystal.bmp");
    texture[18] = LoadTexBMP("grass.bmp");
+   texture[19] = LoadTexBMP("space.bmp");
+
+   //Preliminary particle creation
    glCreateParticles(10, 2, 5, Particle1);
    glCreateParticles(10, 2, -5, Particle2);
    glCreateParticles(-10, 2, 5, Particle3);
    glCreateParticles(-10, 2, -5, Particle4);
 
+   //Load relavent shader
    shader[1] = CreateShaderProg("fire.vert","fire.frag");
 
    ErrCheck("init");
