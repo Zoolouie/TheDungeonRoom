@@ -16,12 +16,16 @@
 #include <math.h>
 #include <time.h>
 
+int torch1 = 0;
+int torch2 = 0;
+int torch3 = 0;
+int torch4 = 0;
 int mode=0;       //  Texture mode
 int ntex=0;       //  Cube faces
 int axes=1;       //  Display axes
 int th=0;         //  Azimuth of view angle
 int ph=0;         //  Elevation of view angle
-int light=1;      //  Lighting
+int light=0;      //  Lighting
 int rep=1;        //  Repitition
 double asp=1;     //  Aspect ratio
 double dim=3.0;   //  Size of world
@@ -1263,36 +1267,99 @@ void display()
    //First person camera shtuff
   gluLookAt(f_x, f_y, f_z, cam_x + f_x, cam_y + f_y, cam_z + f_z , 0,1,0);
    //  Light switch
-
-   if (light)
-   {
-      //  Translate intensity to color vectors
-   //  Set up lighting
   glEnable(GL_LIGHTING);
-   float Ambient[]   = {0.2,0.2,0.2,1.0};
-   float Diffuse[]   = {0.8,0.8,0.8,1.0};
-   float Specular[]  = {1.0,1.0,1.0,1.0};
-   float pos[]     = {10 , 2.5, 5 , 1.0};
-   float pos2[] = {8, 2.5, -5, 1.0};
-   glEnable(GL_NORMALIZE);
-   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
-   glEnable(GL_COLOR_MATERIAL);
-   glEnable(GL_LIGHT0);
+  float Ambient[]   = {0.2,0.2,0.2,1.0};
+  float Diffuse[]   = {0.8,0.8,0.8,1.0};
+  float Specular[]  = {1.0,1.0,1.0,1.0};
+  float pos[]     = {11 , 2., 5 , 1.0};
+  float pos2[] = {11, 2., -5, 1.0};
+  float pos3[] = {-11.3, 2, 5, 1.0};
+  float pos4[] = {-11.3, 2, -5, 1.0};
 
-   glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
-   glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
-   glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
-   glLightfv(GL_LIGHT0,GL_POSITION,pos);
+  float Amb[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
+  float Diff[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
+  float Spec[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
+  //  Light direction
+  float Pos[]  = {5*Cos(zh),ylight,5*Sin(zh),1};
 
-   glEnable(GL_LIGHT1);
-   glLightfv(GL_LIGHT1,GL_AMBIENT , Ambient);
-   glLightfv(GL_LIGHT1,GL_DIFFUSE , Diffuse);
-   glLightfv(GL_LIGHT1,GL_SPECULAR, Specular);
-   glLightfv(GL_LIGHT1,GL_POSITION,pos2);
-   }
-   else
-      glDisable(GL_LIGHTING);
-   //  Draw scene
+  glEnable(GL_NORMALIZE);
+  glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+  glEnable(GL_COLOR_MATERIAL);
+
+  //Draw Torch Particles
+  glUseProgram(shader[1]);
+  if (torch1) {
+       glEnable(GL_LIGHT0);
+
+       glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
+       glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
+       glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
+       glLightfv(GL_LIGHT0,GL_POSITION,pos);
+       glUpdateParticles(11.3, 2, 5, Particle1);
+        glDrawParticles(Particle1);
+  } else {
+    glDisable(GL_LIGHT0);
+  }
+  if (torch2) {
+       glEnable(GL_LIGHT1);
+
+       glLightfv(GL_LIGHT1,GL_AMBIENT , Ambient);
+       glLightfv(GL_LIGHT1,GL_DIFFUSE , Diffuse);
+       glLightfv(GL_LIGHT1,GL_SPECULAR, Specular);
+       glLightfv(GL_LIGHT1,GL_POSITION,pos2);
+       glUpdateParticles(11.3, 2, -5, Particle2);
+       glDrawParticles(Particle2);
+  } else {
+    glDisable(GL_LIGHT1);
+  }
+  if (torch3) {
+  glEnable(GL_LIGHT3);
+
+  glLightfv(GL_LIGHT3,GL_AMBIENT , Ambient);
+  glLightfv(GL_LIGHT3,GL_DIFFUSE , Diffuse);
+  glLightfv(GL_LIGHT3,GL_SPECULAR, Specular);
+  glLightfv(GL_LIGHT3,GL_POSITION,pos3);
+  glUpdateParticles(-11.3, 2, 5, Particle3);
+  glDrawParticles(Particle3);
+  } else {
+    glDisable(GL_LIGHT3);
+  }
+  if (torch4) {
+  glEnable(GL_LIGHT4);
+
+  glLightfv(GL_LIGHT4,GL_AMBIENT , Ambient);
+  glLightfv(GL_LIGHT4,GL_DIFFUSE , Diffuse);
+  glLightfv(GL_LIGHT4,GL_SPECULAR, Specular);
+  glLightfv(GL_LIGHT4,GL_POSITION,pos4);
+
+  glUpdateParticles(-11.3, 2, -5, Particle4);
+  glDrawParticles(Particle4);
+  } else {
+    glDisable(GL_LIGHT4);
+  }
+
+  if (light){
+      //  Draw light position as ball (still no lighting here)
+      glColor3f(1,1,1);
+      ball(Pos[0],Pos[1],Pos[2] , 0.1);
+      //  OpenGL should normalize normal vectors
+      glEnable(GL_NORMALIZE);
+      //  Enable lighting
+      glEnable(GL_LIGHTING);
+      //  glColor sets ambient and diffuse color materials
+      glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+      glEnable(GL_COLOR_MATERIAL);
+      //  Enable light 0
+      glEnable(GL_LIGHT2);
+      //  Set ambient, diffuse, specular components and position of light 0
+      glLightfv(GL_LIGHT2,GL_AMBIENT ,Amb);
+      glLightfv(GL_LIGHT2,GL_DIFFUSE ,Diff);
+      glLightfv(GL_LIGHT2,GL_SPECULAR,Spec);
+      glLightfv(GL_LIGHT2,GL_POSITION,Pos);
+  }
+
+
+  glUseProgram(shader[0]);
    // icosahedron(.5, 0);
   drawBorders();
   // drawMantle(0, 0, 0, 1, 1, 1);
@@ -1334,26 +1401,9 @@ void display()
   drawSpikes(3, -6, 11., 3.5, 4, 4, 0, 0, 0, 0);
 
 
-
-
-  //Draw Torch Particles
-  glUseProgram(shader[1]);
-  glUpdateParticles(11.3, 2, 5, Particle1);
-  glDrawParticles(Particle1);
-
-  glUpdateParticles(11.3, 2, -5, Particle2);
-  glDrawParticles(Particle2);
-
-  glUpdateParticles(-11.3, 2, 5, Particle3);
-  glDrawParticles(Particle3);
-
-  glUpdateParticles(-11.3, 2, -5, Particle4);
-  glDrawParticles(Particle4);
-
   glDisable(GL_LIGHTING);
   glColor3f(1,1,1);
 
-  glUseProgram(shader[0]);
 
    if (axes)
    {
@@ -1444,6 +1494,14 @@ void key(unsigned char ch,int x,int y)
    //  Reset view angle
   else if (ch == '0')
       th = ph = 0;
+  else if (ch == '1')
+      torch1 = 1 - torch1;
+  else if (ch == '2')
+      torch2 = 1 - torch2;
+  else if (ch == '3')
+      torch3 = 1 - torch3;
+  else if (ch == '4')
+      torch4 = 1 - torch4;
    //  Toggle texture mode
   else if (ch == 'm' || ch == 'M')
     mode = 1-mode;
@@ -1451,8 +1509,8 @@ void key(unsigned char ch,int x,int y)
   else if (ch == 'x' || ch == 'X')
     axes = 1-axes;
   //  Toggle lighting
-  else if (ch == 'l' || ch == 'L')
-    light = 1-light;
+  else if (ch == 'l' || ch == 'L') 
+    light = 1 - light;
   //  Toggle textures mode
   else if (ch == 't')
     ntex = 1-ntex;
