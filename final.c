@@ -33,9 +33,11 @@ int specular  =   0;  // Specular intensity (%)
 int shininess =   0;  // Shininess (power of two)
 float shiny   =   1;    // Shininess (value)
 int zh        =  90;  // Light azimuth
+int ch = 90;
 float ylight  =   0;  // Elevation of light
 GLuint texture[20]; // Texture names
 
+int shader[] = {0,0,0,0,0,0,0,0,0,0,0};
 //Person positions
 double f_x = -3;
 double f_y = 1.0;
@@ -72,7 +74,7 @@ typedef struct {
   bool Visible;
 }PARTICLES;
 
-PARTICLES Particle1[500];
+PARTICLES Particle1[10000];
 PARTICLES Particle2[500];
 PARTICLES Particle3[500];
 PARTICLES Particle4[500];
@@ -436,6 +438,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 static void plane(float width, float height, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex, float repeat) {
    glPushMatrix();
    glEnable(GL_TEXTURE_2D);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glBindTexture(GL_TEXTURE_2D, texture[tex]);
    glColor3f(1,1 ,1);
    glRotatef(rotate, x_r, y_r, z_r);
@@ -969,7 +972,7 @@ void drawGamePeices(double x, double y, double z, double x_s, double y_s, double
 }
 
 void drawBoardGame() {
-  plane(2, 2, 0, 0, 0, 0, 0, -2.7, 0, 12, 8);
+  plane(2, 2, 0, 0, 0, 0, 0, -2.7, 0, 12, 18);
   //DRAW ON BOARD PEICES
   //Blue peices
   drawGamePeices(1.3, -2.7, 0, .1, .1, .1, 0, 1, 0, 82, 0);
@@ -1169,7 +1172,73 @@ void drawSpikes(double x, double y, double z, double x_s, double y_s, double z_s
 
 }
 
-void drawGateBorder() {
+void drawCubeArtifact(double x, double y, double z, double x_s, double y_s, double z_s, double x_r, double y_r, double z_r, double rot) {
+
+  glPushMatrix();
+
+  glTranslated(x, y, z);
+  glScaled(x_s, y_s, z_s);
+  glRotatef(rot, x_r, y_r, z_r);
+
+  double osci = fabs(sin(ch * .1)) * 0.1;
+  int tex = 10;
+  // //Left sidea
+  // cube (.21+ osci, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, 1);
+  cube(.21 + osci, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, -.21- osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, .21+ osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, -.21- osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(.21 + osci, 0, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, 0, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, -.21- osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(.21 + osci, .21+ osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(.21+ osci, 0, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(-.21- osci, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, -.21- osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, .21+ osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, -.21- osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(-.21- osci, 0, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, 0, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, -.21- osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-.21- osci, .21+ osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(-.21- osci, 0, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(0, .21+ osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(0, -.21- osci, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(-0, .21+ osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(0, -.21- osci, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  cube(0, 0, .21+ osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(0, 0, -.21- osci, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(0, -.21- osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+  cube(0, .21+ osci, 0, .1, .1, .1, 0, 0, 0, 0, tex);
+
+  glColor3f(0, .5, .5);
+  ball(0, 0, 0, .2);
+
+
+  glPopMatrix();
+
+}
+
+
+void drawBarrel() {
+  glBegin(GL_TRIANGLE_FAN);
+  glTexCoord2f( 0.5, 0.5 );
+  glVertex3f(0, 0, 0);  
+  for (double i = 0; i <= 2 * 3.1415; i += .1)
+  {
+      glNormal3f(0,0,-1);
+      glTexCoord2f( 0.5f * cos(i) + 0.5f, 0.5f * sin(i) + 0.5f );
+      glVertex3f(2 * cos(i), 0, 2 * sin(i));
+  }
+
+  glEnd();
 
 }
 
@@ -1209,7 +1278,7 @@ void display()
    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
    glEnable(GL_COLOR_MATERIAL);
    glEnable(GL_LIGHT0);
-   ball(pos[0], pos[1], pos[2], .1);
+
    glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
    glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
    glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
@@ -1227,7 +1296,7 @@ void display()
    // icosahedron(.5, 0);
   drawBorders();
   // drawMantle(0, 0, 0, 1, 1, 1);
-  drawSwordMantle(0, 2.5, -.25, 1, 1, 1, 0, 1, 0, 90);
+  drawSwordMantle(-.5, 2.5, 0, 1, 1, 1, 0, 1, 0, 90);
 
 
   displayPedistool(10, -6, 0, 1.5, 2, 1.5, 0, 0, 0, 0);
@@ -1245,6 +1314,9 @@ void display()
   ringArtifact(10, -.5, 3);
   ringArtifact(10, -.5, -3);
 
+  drawCubeArtifact(9, 0, 11, 1, 1, 1, 1, 1, 1, zh);
+  cylinder(9, -.9, 11, 1, .01, 1, 0, 0, 0, 1, 10);
+
   drawShelf(8, 0, 0);
   drawShelf(-8, 0, 0);
   drawWallChains(0, -2, -1, 1, 1, 1, 0, 0, 0, 0);
@@ -1253,32 +1325,35 @@ void display()
   // drawDoor(0, 0, 11);
   drawBoardGame();
 
-  drawTorch(10, 0, 5, 2, 2, 2, 0, 0, 0, 0);
-  drawTorch(10, 0, -5, 2, 2, 2, 0, 0, 0, 0);
-  drawTorch(-10, 0, 5, 2, 2, 2, 0, 1, 0, 180);
-  drawTorch(-10, 0, -5, 2, 2, 2, 0, 1, 0, 180);
+
+  drawTorch(11.3, 0, 5, 2, 2, 2, 0, 0, 0, 0);
+  drawTorch(11.3, 0, -5, 2, 2, 2, 0, 0, 0, 0);
+  drawTorch(-11.3, 0, 5, 2, 2, 2, 0, 1, 0, 180);
+  drawTorch(-11.3, 0, -5, 2, 2, 2, 0, 1, 0, 180);
 
   drawSpikes(3, -6, 11., 3.5, 4, 4, 0, 0, 0, 0);
-  // drawSpikes(0, 0, 0, 1, 1, 1, 0, 0, 0, 0);
 
 
 
 
   //Draw Torch Particles
-  glUpdateParticles(10, 2, 5, Particle1);
+  glUseProgram(shader[1]);
+  glUpdateParticles(11.3, 2, 5, Particle1);
   glDrawParticles(Particle1);
 
-  glUpdateParticles(10, 2, -5, Particle2);
+  glUpdateParticles(11.3, 2, -5, Particle2);
   glDrawParticles(Particle2);
 
-  glUpdateParticles(-10, 2, 5, Particle3);
+  glUpdateParticles(-11.3, 2, 5, Particle3);
   glDrawParticles(Particle3);
 
-  glUpdateParticles(-10, 2, -5, Particle4);
+  glUpdateParticles(-11.3, 2, -5, Particle4);
   glDrawParticles(Particle4);
 
   glDisable(GL_LIGHTING);
   glColor3f(1,1,1);
+
+  glUseProgram(shader[0]);
 
    if (axes)
    {
@@ -1320,6 +1395,8 @@ void idle()
    //  Elapsed time in seconds
    double t = glutGet(GLUT_ELAPSED_TIME)/1000.0;
    zh = fmod(90*t,360.0);
+
+   ch = fmod(t * 15, 360);
    //  Tell GLUT it is necessary to redisplay the scene
    glutPostRedisplay();
 }
@@ -1448,6 +1525,112 @@ void reshape(int width,int height)
 }
 
 /*
+ *  Print Shader Log
+ */
+void PrintShaderLog(int obj,char* file)
+{
+   int len=0;
+   glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&len);
+   if (len>1)
+   {
+      int n=0;
+      char* buffer = (char *)malloc(len);
+      if (!buffer) Fatal("Cannot allocate %d bytes of text for shader log\n",len);
+      glGetShaderInfoLog(obj,len,&n,buffer);
+      fprintf(stderr,"%s:\n%s\n",file,buffer);
+      free(buffer);
+   }
+   glGetShaderiv(obj,GL_COMPILE_STATUS,&len);
+   if (!len) Fatal("Error compiling %s\n",file);
+}
+//Shader stuff
+
+ 
+char* ReadText(char *file)
+{
+   int   n;
+   char* buffer;
+   //  Open file
+   FILE* f = fopen(file,"rt");
+   if (!f) Fatal("Cannot open text file %s\n",file);
+   //  Seek to end to determine size, then rewind
+   fseek(f,0,SEEK_END);
+   n = ftell(f);
+   rewind(f);
+   //  Allocate memory for the whole file
+   buffer = (char*)malloc(n+1);
+   if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
+   //  Snarf the file
+   if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
+   buffer[n] = 0;
+   //  Close and return
+   fclose(f);
+   return buffer;
+}
+
+/*
+ *  Print Program Log
+ */
+void PrintProgramLog(int obj)
+{
+   int len=0;
+   glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&len);
+   if (len>1)
+   {
+      int n=0;
+      char* buffer = (char *)malloc(len);
+      if (!buffer) Fatal("Cannot allocate %d bytes of text for program log\n",len);
+      glGetProgramInfoLog(obj,len,&n,buffer);
+      fprintf(stderr,"%s\n",buffer);
+   }
+   glGetProgramiv(obj,GL_LINK_STATUS,&len);
+   if (!len) Fatal("Error linking program\n");
+}
+
+/*
+ *  Create Shader
+ */
+int CreateShader(GLenum type,char* file)
+{
+   //  Create the shader
+   int shader = glCreateShader(type);
+   //  Load source code from file
+   char* source = ReadText(file);
+   glShaderSource(shader,1,(const char**)&source,NULL);
+   free(source);
+   //  Compile the shader
+   fprintf(stderr,"Compile %s\n",file);
+   glCompileShader(shader);
+   //  Check for errors
+   PrintShaderLog(shader,file);
+   //  Return name
+   return shader;
+}
+
+/*
+ *  Create Shader Program
+ */
+int CreateShaderProg(char* VertFile,char* FragFile)
+{
+   //  Create program
+   int prog = glCreateProgram();
+   //  Create and compile vertex shader
+   int vert = CreateShader(GL_VERTEX_SHADER  ,VertFile);
+   //  Create and compile fragment shader
+   int frag = CreateShader(GL_FRAGMENT_SHADER,FragFile);
+   //  Attach vertex shader
+   glAttachShader(prog,vert);
+   //  Attach fragment shader
+   glAttachShader(prog,frag);
+   //  Link program
+   glLinkProgram(prog);
+   //  Check for errors
+   PrintProgramLog(prog);
+   //  Return name
+   return prog;
+}
+
+/*
  *  Start up GLUT and tell it what to do
  */
 int main(int argc,char* argv[])
@@ -1461,6 +1644,11 @@ int main(int argc,char* argv[])
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
    glutInitWindowSize(600,600);
    glutCreateWindow("Alexander Louie Final");
+
+   #ifdef USEGLEW
+   //  Initialize GLEW
+   if (glewInit()!=GLEW_OK) Fatal("Error initializing GLEW\n");
+  #endif
    //  Set callbacks
    glutDisplayFunc(display);
    glutReshapeFunc(reshape);
@@ -1469,7 +1657,7 @@ int main(int argc,char* argv[])
    glutIdleFunc(idle);
    //  Pass control to GLUT so it can interact with the user
    texture[0] = LoadTexBMP("crate.bmp");
-   texture[1] = LoadTexBMP("grass.bmp");
+   texture[1] = LoadTexBMP("chicken.bmp");
    texture[2] = LoadTexBMP("rivet_steel_1.bmp");
    texture[3] = LoadTexBMP("metal.bmp");
    texture[4] = LoadTexBMP("wall.bmp");
@@ -1484,10 +1672,16 @@ int main(int argc,char* argv[])
    texture[13] = LoadTexBMP("flame.bmp");
    texture[14] = LoadTexBMP("walltwo.bmp");
    texture[15] = LoadTexBMP("brick.bmp");
+   texture[16] = LoadTexBMP("mystic.bmp");
+   texture[17] = LoadTexBMP("pcrystal.bmp");
+   texture[18] = LoadTexBMP("grass.bmp");
    glCreateParticles(10, 2, 5, Particle1);
    glCreateParticles(10, 2, -5, Particle2);
    glCreateParticles(-10, 2, 5, Particle3);
    glCreateParticles(-10, 2, -5, Particle4);
+
+   shader[1] = CreateShaderProg("fire.vert","fire.frag");
+
    ErrCheck("init");
 
    glutMainLoop();
