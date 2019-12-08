@@ -13,7 +13,7 @@
 #include <math.h>
 #include <time.h>
 
-int torch1 = 0;
+int torch1 = 1;
 int torch2 = 0;
 int torch3 = 0;
 int torch4 = 0;
@@ -118,7 +118,7 @@ void glCreateParticles (double x, double y, double z, PARTICLES Particle[]) {
 }
 
 
-static void glDrawParticles (PARTICLES Particle[]) {
+void glDrawParticles (PARTICLES Particle[]) {
   int i;
   for (i = 1; i < ParticleCount; i++)
   {
@@ -234,7 +234,7 @@ float * calculateNormal(float * v1, float * v2, float *v3, GLfloat * N) {
  *     at (x,y,z)
  *     radius r
  */
-static void ball(double x,double y,double z,double r)
+void ball(double x,double y,double z,double r)
 {
    //  Save transformation
    glPushMatrix();
@@ -247,7 +247,7 @@ static void ball(double x,double y,double z,double r)
 }
 
 
-static void flatTop(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, 
+void flatTop(double x,double y,double z, double x_r, double y_r, double z_r, double rotation, 
   double r,double d, int tex)
 {
    int i,k;
@@ -289,7 +289,7 @@ static void flatTop(double x,double y,double z, double x_r, double y_r, double z
    glDisable(GL_TEXTURE_2D);
 }
 
-static void cube(double x,double y,double z,
+void cube(double x,double y,double z,
                  double dx,double dy,double dz,
                  double x_r, double y_r, double z_r,
                  double th, int tex)
@@ -354,7 +354,7 @@ static void cube(double x,double y,double z,
 }
 
 //Code Referenced from StackOverflow
-static void drawTorus(double r, double c,
+void drawTorus(double r, double c,
                int rSeg, int cSeg, double x_t, double y_t, double z_t,
                double x_r, double y_r, double z_r, double rotate)
 {
@@ -395,7 +395,7 @@ static void drawTorus(double r, double c,
   glPopMatrix();
 }
 
-static void cylinder(double x, double y, double z, double x_s, double y_s, 
+void cylinder(double x, double y, double z, double x_s, double y_s, 
   double z_s, double x_r, double y_r, double z_r, double rotation, int tex)
 {
     const double PI = 3.14159;
@@ -457,7 +457,7 @@ static void cylinder(double x, double y, double z, double x_s, double y_s,
 }
 
 
-static void plane(float width, float height, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex, float repeat) {
+ void plane(float width, float height, float rotate, float x_r, float y_r, float z_r, float x_t, float y_t, float z_t, int tex, float repeat) {
   glPushMatrix();
   glEnable(GL_TEXTURE_2D);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -488,7 +488,7 @@ static void plane(float width, float height, float rotate, float x_r, float y_r,
 }
 
 
-static void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
+ void icosahedron(double x, double y, double z, double x_s, double y_s, double z_s) {
   glPushMatrix();
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D,texture[7]);
@@ -549,7 +549,7 @@ static void icosahedron(double x, double y, double z, double x_s, double y_s, do
    glPopMatrix();
 }
 
-static void cone(double x, double y, double z, double x_s, double y_s, double z_s, 
+ void cone(double x, double y, double z, double x_s, double y_s, double z_s, 
   double x_t, double y_t, double z_t, double rotation, int tex) {
   glPushMatrix();
   glEnable(GL_TEXTURE_2D);
@@ -1403,52 +1403,53 @@ void display()
 
   //Handler for drawing torches/ regular light
   glUseProgram(shader[1]);
-  if (torch1) {
-       glEnable(GL_LIGHT0);
 
-       glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
-       glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
-       glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
-       glLightfv(GL_LIGHT0,GL_POSITION,pos);
-       glUpdateParticles(11.3, 2, 5, Particle1);
-        glDrawParticles(Particle1);
+  if (torch1) {
+    glEnable(GL_LIGHT0);
+
+    glLightfv(GL_LIGHT0,GL_AMBIENT , Ambient);
+    glLightfv(GL_LIGHT0,GL_DIFFUSE , Diffuse);
+    glLightfv(GL_LIGHT0,GL_SPECULAR, Specular);
+    glLightfv(GL_LIGHT0,GL_POSITION,pos);
+    glUpdateParticles(11.3, 2, 5, Particle1);
+    glDrawParticles(Particle1);
   } else {
     glDisable(GL_LIGHT0);
   }
   if (torch2) {
-       glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHT1);
 
-       glLightfv(GL_LIGHT1,GL_AMBIENT , Ambient);
-       glLightfv(GL_LIGHT1,GL_DIFFUSE , Diffuse);
-       glLightfv(GL_LIGHT1,GL_SPECULAR, Specular);
-       glLightfv(GL_LIGHT1,GL_POSITION,pos2);
-       glUpdateParticles(11.3, 2, -5, Particle2);
-       glDrawParticles(Particle2);
+    glLightfv(GL_LIGHT1,GL_AMBIENT , Ambient);
+    glLightfv(GL_LIGHT1,GL_DIFFUSE , Diffuse);
+    glLightfv(GL_LIGHT1,GL_SPECULAR, Specular);
+    glLightfv(GL_LIGHT1,GL_POSITION,pos2);
+    glUpdateParticles(11.3, 2, -5, Particle2);
+    glDrawParticles(Particle2);
   } else {
     glDisable(GL_LIGHT1);
   }
   if (torch3) {
-  glEnable(GL_LIGHT3);
+    glEnable(GL_LIGHT3);
 
-  glLightfv(GL_LIGHT3,GL_AMBIENT , Ambient);
-  glLightfv(GL_LIGHT3,GL_DIFFUSE , Diffuse);
-  glLightfv(GL_LIGHT3,GL_SPECULAR, Specular);
-  glLightfv(GL_LIGHT3,GL_POSITION,pos3);
-  glUpdateParticles(-11.3, 2, 5, Particle3);
-  glDrawParticles(Particle3);
+    glLightfv(GL_LIGHT3,GL_AMBIENT , Ambient);
+    glLightfv(GL_LIGHT3,GL_DIFFUSE , Diffuse);
+    glLightfv(GL_LIGHT3,GL_SPECULAR, Specular);
+    glLightfv(GL_LIGHT3,GL_POSITION,pos3);
+    glUpdateParticles(-11.3, 2, 5, Particle3);
+    glDrawParticles(Particle3);
   } else {
     glDisable(GL_LIGHT3);
   }
   if (torch4) {
-  glEnable(GL_LIGHT4);
+    glEnable(GL_LIGHT4);
 
-  glLightfv(GL_LIGHT4,GL_AMBIENT , Ambient);
-  glLightfv(GL_LIGHT4,GL_DIFFUSE , Diffuse);
-  glLightfv(GL_LIGHT4,GL_SPECULAR, Specular);
-  glLightfv(GL_LIGHT4,GL_POSITION,pos4);
+    glLightfv(GL_LIGHT4,GL_AMBIENT , Ambient);
+    glLightfv(GL_LIGHT4,GL_DIFFUSE , Diffuse);
+    glLightfv(GL_LIGHT4,GL_SPECULAR, Specular);
+    glLightfv(GL_LIGHT4,GL_POSITION,pos4);
 
-  glUpdateParticles(-11.3, 2, -5, Particle4);
-  glDrawParticles(Particle4);
+    glUpdateParticles(-11.3, 2, -5, Particle4);
+    glDrawParticles(Particle4);
   } else {
     glDisable(GL_LIGHT4);
   }
@@ -1561,38 +1562,6 @@ void idle()
 }
 
 /*
- *  GLUT calls this routine when an arrow key is pressed
- */
-void special(int key,int x,int y)
-{
-   //  Right arrow key - increase angle by 5 degrees
-   if (key == GLUT_KEY_RIGHT)
-      th += 5;
-   //  Left arrow key - decrease angle by 5 degrees
-   else if (key == GLUT_KEY_LEFT)
-      th -= 5;
-   //  Up arrow key - increase elevation by 5 degrees
-   else if (key == GLUT_KEY_UP)
-      ph += 5;
-   //  Down arrow key - decrease elevation by 5 degrees
-   else if (key == GLUT_KEY_DOWN)
-      ph -= 5;
-   //  PageUp key - increase dim
-   else if (key == GLUT_KEY_PAGE_DOWN)
-      dim += 0.1;
-   //  PageDown key - decrease dim
-   else if (key == GLUT_KEY_PAGE_UP && dim>1)
-      dim -= 0.1;
-   //  Keep angles to +/-360 degrees
-   th %= 360;
-   ph %= 360;
-   //  Update projection
-   Project(45,asp,dim);
-   //  Tell GLUT it is necessary to redisplay the scene
-   glutPostRedisplay();
-}
-
-/*
  *  GLUT calls this routine when a key is pressed
  */
 void key(unsigned char ch,int x,int y)
@@ -1611,23 +1580,12 @@ void key(unsigned char ch,int x,int y)
       torch3 = 1 - torch3;
   else if (ch == '4')
       torch4 = 1 - torch4;
-   //  Toggle texture mode
-  else if (ch == 'm' || ch == 'M')
-    mode = 1-mode;
   //  Toggle axes
   else if (ch == 'x' || ch == 'X')
     axes = 1-axes;
   //  Toggle lighting
   else if (ch == 'l' || ch == 'L') 
     light = 1 - light;
-  //  Toggle textures mode
-  else if (ch == 't')
-    ntex = 1-ntex;
-  //  Repitition
-  else if (ch=='+')
-    ylight+= 0.1;
-  else if (ch=='-' )
-    ylight-= 0.1;
 
   // Calculate change in x, y, and z then add to respective positions
   // Moves forwards in first person
@@ -1714,7 +1672,6 @@ int main(int argc,char* argv[])
    //  Set callbacks
    glutDisplayFunc(display);
    glutReshapeFunc(reshape);
-   glutSpecialFunc(special);
    glutKeyboardFunc(key);
    glutIdleFunc(idle);
    //  Pass control to GLUT so it can interact with the user
